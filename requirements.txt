@@ -1,0 +1,8 @@
+pandas
+scanpy
+decoupler
+hdf5plugin
+matplotlib
+seaborn
+leidenalg
+streamlit >= 1.29.0

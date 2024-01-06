@@ -1,0 +1,20 @@
+{
+    "cluster_resolution":0.4,
+    "svd_solver":"arpack",
+    "svd_solver_options": ["arpack", "lobpcg", "auto", "randomized"],
+    "leiden_key":"leiden",
+    "n_genes_min":1000,
+    "n_genes_max":10000,
+    "min_genes": 100,
+    "min_cells": 3,
+    "n_counts_max":30000,
+    "pc_mito": 20,
+    "pc_rib": 25,
+    "n_neigh":10,
+    "n_pcs":40,
+    "csv_delimiter": ",",
+    "h5ad_path": "./data/GSM4089151_P1.h5ad",
+    "normalize_total_counts": false,
+    "only_highly_significant_genes": false,
+    "verbosity": 1
+}

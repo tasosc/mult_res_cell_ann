@@ -1,0 +1,278 @@
+Species	Tissue	Download
+Human	Acinus of salivary gland	 txt
+Human	Adipose tissue of abdominal region	 txt
+Human	Adipose tissue	 txt
+Human	Adrenal gland	 txt
+Human	Adrenal medulla	 txt
+Human	Adventitia	 txt
+Human	Alveolar system	 txt
+Human	Alveolus	 txt
+Human	Amnion	 txt
+Human	Amniotic fluid	 txt
+Human	Anterior cruciate ligament of knee joint	 txt
+Human	Aorta	 txt
+Human	Artery	 txt
+Human	Articular cartilage of joint	 txt
+Human	Ascending colon	 txt
+Human	Ascitic fluid	 txt
+Human	Bladder organ	 txt
+Human	Blastocyst	 txt
+Human	Blood plasma	 txt
+Human	Blood serum	 txt
+Human	Blood vessel	 txt
+Human	Blood	 txt
+Human	Body of stomach	 txt
+Human	Bone marrow	 txt
+Human	Brain	 txt
+Human	Breast epithelium	 txt
+Human	Breast	 txt
+Human	Bronchus	 txt
+Human	Brown adipose tissue	 txt
+Human	Caecum	 txt
+Human	Calcareous tooth	 txt
+Human	Carotid artery segment	 txt
+Human	Carotid body	 txt
+Human	Cartilage element	 txt
+Human	Cartilage tissue	 txt
+Human	Cerebellum	 txt
+Human	Cerebral cortex	 txt
+Human	Cerebrospinal fluid	 txt
+Human	Cervical lymph node	 txt
+Human	Chest wall	 txt
+Human	Chorionic villus	 txt
+Human	Ciliary body	 txt
+Human	Colon	 txt
+Human	Colorectum	 txt
+Human	Common bile duct	 txt
+Human	Cornea	 txt
+Human	Corneal endothelium	 txt
+Human	Corneal epithelium	 txt
+Human	Corneo-scleral junction	 txt
+Human	Coronary artery	 txt
+Human	Corpus luteum	 txt
+Human	Corpus	 txt
+Human	Cortex	 txt
+Human	Cricoid cartilage	 txt
+Human	Crypt of Lieberkuhn of small intestine	 txt
+Human	Crypt of Lieberkuhn	 txt
+Human	Decidua	 txt
+Human	Deciduous tooth	 txt
+Human	Dental pulp	 txt
+Human	Dermis	 txt
+Human	Dorsolateral prefrontal cortex	 txt
+Human	Duodenum	 txt
+Human	Ectocervix	 txt
+Human	Embryo	 txt
+Human	Embryoid body	 txt
+Human	Embryonic brain	 txt
+Human	Embryonic heart	 txt
+Human	Embryonic intestine	 txt
+Human	Embryonic pancreas	 txt
+Human	Embryonic prefrontal cortex	 txt
+Human	Embryonic testis	 txt
+Human	Endometrial stroma	 txt
+Human	Endometrium	 txt
+Human	Entorhinal cortex	 txt
+Human	Epicardium	 txt
+Human	Epithelium of esophagus	 txt
+Human	Epithelium of mammary gland	 txt
+Human	Epithelium of small intestine	 txt
+Human	Epithelium of stomach	 txt
+Human	Epithelium of trachea	 txt
+Human	Esophagus mucosa	 txt
+Human	Esophagus	 txt
+Human	Ethmoid sinus	 txt
+Human	Excretory duct of salivary gland	 txt
+Human	Eye trabecular meshwork	 txt
+Human	Eye	 txt
+Human	Fallopian tube	 txt
+Human	Fat pad	 txt
+Human	Fetal adrenal gland	 txt
+Human	Fetal brain	 txt
+Human	Fetal calvaria	 txt
+Human	Fetal eyes	 txt
+Human	Fetal female gonad	 txt
+Human	Fetal femur	 txt
+Human	Fetal gonad	 txt
+Human	Fetal heart	 txt
+Human	Fetal hip bone	 txt
+Human	Fetal intestine	 txt
+Human	Fetal kidney	 txt
+Human	Fetal liver	 txt
+Human	Fetal lung	 txt
+Human	Fetal male gonad	 txt
+Human	Fetal muscle	 txt
+Human	Fetal pancreas	 txt
+Human	Fetal rib	 txt
+Human	Fetal spinal cord	 txt
+Human	Fetal stomach	 txt
+Human	Fetal testis	 txt
+Human	Fetal thymus	 txt
+Human	Fimbria of uterine tube	 txt
+Human	Forebrain	 txt
+Human	Gall bladder	 txt
+Human	Gastric gland	 txt
+Human	Gastrula	 txt
+Human	Gingiva	 txt
+Human	Granulation tissue	 txt
+Human	Gut wall	 txt
+Human	Hair follicle	 txt
+Human	Head of femur	 txt
+Human	Heart	 txt
+Human	Hepatic sinusoid	 txt
+Human	Hindlimb stylopod	 txt
+Human	Hippocampal formation	 txt
+Human	Hypothalamus	 txt
+Human	Ileum	 txt
+Human	Inferior nasal concha	 txt
+Human	Intervertebral disk	 txt
+Human	Intestine	 txt
+Human	Iris	 txt
+Human	Islet of Langerhans	 txt
+Human	Jaw region	 txt
+Human	Jejunum	 txt
+Human	Kidney	 txt
+Human	Knee	 txt
+Human	Labial gland	 txt
+Human	Lacrimal gland	 txt
+Human	Large intestine	 txt
+Human	Laryngeal vocal fold	 txt
+Human	Larynx epithelium	 txt
+Human	Larynx	 txt
+Human	Ligament	 txt
+Human	Limbal basal epithelium	 txt
+Human	Liver	 txt
+Human	Lung	 txt
+Human	Lymph node	 txt
+Human	Lymph	 txt
+Human	Lymphoid tissue	 txt
+Human	Major salivary gland	 txt
+Human	Mammary gland	 txt
+Human	Manus	 txt
+Human	Median basilic vein	 txt
+Human	Medulla of thymus	 txt
+Human	Meniscus	 txt
+Human	Mesenchyme of umbilical cord	 txt
+Human	Mesenteric artery	 txt
+Human	Mesenteric lymph node	 txt
+Human	Midbrain	 txt
+Human	Minor salivary gland	 txt
+Human	Molar tooth	 txt
+Human	Mouth mucosa	 txt
+Human	Mouth	 txt
+Human	Mucosa of pyloric antrum	 txt
+Human	Mucosa of small intestine	 txt
+Human	Mucosa of stomach	 txt
+Human	Muscle organ	 txt
+Human	Muscle scar	 txt
+Human	Myocardium	 txt
+Human	Myometrium	 txt
+Human	Nail bed	 txt
+Human	Nail matrix	 txt
+Human	Nail unit	 txt
+Human	Nail	 txt
+Human	Nasal cavity epithelium	 txt
+Human	Nasal cavity mucosa	 txt
+Human	Nasal cavity respiratory epithelium	 txt
+Human	Nasal cavity	 txt
+Human	Nasopharynx	 txt
+Human	Nerve	 txt
+Human	Neuron projection bundle connecting eye with brain	 txt
+Human	Nose	 txt
+Human	Nucleus pulposus	 txt
+Human	Olfactory epithelium	 txt
+Human	Omentum	 txt
+Human	Optic choroid	 txt
+Human	Oral cavity	 txt
+Human	Orbitalis muscle	 txt
+Human	Ovarian cortex	 txt
+Human	Ovarian follicle	 txt
+Human	Ovary	 txt
+Human	Palmar part of manus	 txt
+Human	Pancreas	 txt
+Human	Pancreatic acinus	 txt
+Human	Paranasal sinus	 txt
+Human	Parotid gland	 txt
+Human	Penis	 txt
+Human	Periodontal ligament	 txt
+Human	Periosteum	 txt
+Human	Peritoneal cavity	 txt
+Human	Peritoneum	 txt
+Human	Pes	 txt
+Human	Pigmented layer of retina	 txt
+Human	Pituitary gland	 txt
+Human	Placenta	 txt
+Human	Pleura	 txt
+Human	Posterior part of tongue	 txt
+Human	Premolar tooth	 txt
+Human	Primitive streak	 txt
+Human	Prostate gland	 txt
+Human	Pyloric antrum	 txt
+Human	Pyloric gastric gland	 txt
+Human	Rectum	 txt
+Human	Red pulp of spleen	 txt
+Human	Renal glomerulus	 txt
+Human	Respiratory tract epithelium	 txt
+Human	Retina	 txt
+Human	Retinal neural layer	 txt
+Human	Right cardiac atrium	 txt
+Human	Right coronary artery	 txt
+Human	Sacral vertebra	 txt
+Human	Saliva-secreting gland	 txt
+Human	Scalp	 txt
+Human	Sclera	 txt
+Human	Segmental bronchus	 txt
+Human	Seminal fluid	 txt
+Human	Sigmoid colon	 txt
+Human	Sinoatrial node	 txt
+Human	Skeletal muscle tissue	 txt
+Human	Skin epidermis of prepuce of penis	 txt
+Human	Skin of body	 txt
+Human	Skin of eyelid	 txt
+Human	Skin of forearm	 txt
+Human	Skin of pes	 txt
+Human	Skin of prepuce of penis	 txt
+Human	Small intestine	 txt
+Human	Spinal cord	 txt
+Human	Spleen	 txt
+Human	Sputum	 txt
+Human	Stomach	 txt
+Human	Subcutaneous abdominal adipose tissue	 txt
+Human	Subcutaneous adipose tissue	 txt
+Human	Submandibular gland	 txt
+Human	Sympathetic ganglion	 txt
+Human	Synovial fluid	 txt
+Human	Synovial membrane of synovial joint	 txt
+Human	Synovial membrane of synovial tendon sheath	 txt
+Human	Telencephalon	 txt
+Human	Temporal lobe	 txt
+Human	Tendon	 txt
+Human	Testis	 txt
+Human	Thymus	 txt
+Human	Thyroid gland	 txt
+Human	Tongue	 txt
+Human	Tonsil	 txt
+Human	Tooth bud	 txt
+Human	Trachea gland	 txt
+Human	Trachea	 txt
+Human	Tracheobronchial lymph node	 txt
+Human	Transverse colon	 txt
+Human	Tunica intima of artery	 txt
+Human	Tympanic membrane	 txt
+Human	Umbilical artery	 txt
+Human	Umbilical cord blood	 txt
+Human	Umbilical cord	 txt
+Human	Umbilical vein	 txt
+Human	Urethra	 txt
+Human	Uterine cervix	 txt
+Human	Uterus	 txt
+Human	Vagina	 txt
+Human	Vasculature of liver	 txt
+Human	Vastus lateralis	 txt
+Human	Venous blood	 txt
+Human	Vertebra	 txt
+Human	Vertebral column	 txt
+Human	Visceral fat	 txt
+Human	Wall of blood vessel	 txt
+Human	White adipose tissue	 txt
+Human	Yolk sac	 txt
