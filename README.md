@@ -13,13 +13,13 @@ or
 ## Running with Docker
 
 ```sh
-docker run --rm --name multi_res_cell_all -p 8501:8501 firewalkergr/mult_res_cell_ann:latest
+docker run --rm --name multi_res_cell_all -p 8501:8501  tasosc/mult_res_cell_ann:1.0
 ```
 
 ## Running with Podman
 
 ```sh
-podman run --rm --name multi_res_cell_all -p 8501:8501 firewalkergr/mult_res_cell_ann:latest
+podman run --rm --name multi_res_cell_all -p 8501:8501  tasosc/mult_res_cell_ann:1.0
 ```
 
 ## Running directly with Python (Linux)
