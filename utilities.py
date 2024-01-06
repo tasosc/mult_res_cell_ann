@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import base64
-import io
 import pandas as pd
 import json
 import logging
@@ -154,14 +153,59 @@ class ImportExport:
                 cell.new_genes = cell_dict.get('new_genes', None)
         return (config, tissue, cells)
 
-                
-            
 
+class Render:
+    """
+    Helper class to render plots, dataframes and text without adding a dependency to the streamlit
+    """
+    def __init__(self) -> None:
+        """
+        Initialize a new instance of the Render class
         
+        """
+        self.render_fig_lambda = None
+        self.render_text_lambda = None
+    
+    def set_render_fig_lambda(self, render_lambda):
+        """
+        Helper method that sets function to write figure output, e.g. in StreamLit it would be `st.pyplot`
+        """
+        self.render_fig_lambda = render_lambda
 
-        
-        
+    def set_render_text_lambda(self, render_lambda):
+        """
+        Helper method that sets function to write text and dataframe output, e.g. in StreamLit it would be `st.write`
+        """
+        self.render_text_lambda = render_lambda
 
+    def render_fig(self, fig, expected_verbosity=1):
+        """
+        Render the provided figure if the expected verbocity is equal or less than the configured verbocity
 
+        Parameters
+        ---------
+        fig: Matplotlib Figure
+            The figure. If it is None this method does nothing
+        expected_vebosity: int
+            The expected verbosity
 
+        """
+        if fig is None:
+            return
+        if self.render_fig_lambda:
+            self.render_fig_lambda(fig, expected_verbosity)
 
+    def render_text(self, something, expected_verbosity=1):
+        """
+        Render the provided something if the expected verbocity is equal or less than the configured verbocity
+
+        Parameters
+        ---------
+        something: Any | str | DataFrame
+            Something that could be written
+        expected_vebosity: int
+            The expected verbosity
+
+        """
+        if self.render_text_lambda:
+            self.render_text_lambda(something, expected_verbosity)

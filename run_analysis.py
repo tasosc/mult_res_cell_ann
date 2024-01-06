@@ -48,8 +48,8 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
     status.update(label="Reading dataset", state="running", expanded=True)
     try:
         pp = PreProcessing.build_from(uploaded_file, config)
-        pp.set_render_fig_lambda(render_fig)
-        pp.set_render_text_lambda(render_text)
+        pp.render.set_render_fig_lambda(render_fig)
+        pp.render.set_render_text_lambda(render_text)
     except Exception as e:
         logger.info("Could not parse file. Reason %s", repr(e), exc_info=1, stack_info=True)
         status.update(label="Could not parse file", state="error", expanded=True)
@@ -91,8 +91,8 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
     st.subheader("Structure identification")
     si = StructureIdentification(pp.adata, config)
 
-    si.set_render_fig_lambda(render_fig)
-    si.set_render_text_lambda(render_text)
+    si.render.set_render_fig_lambda(render_fig)
+    si.render.set_render_text_lambda(render_text)
     st.subheader("Clustering")
     render_text(f"Filter cell marker dataframe to obtain markers related to {tissue_type}", 2)
     try:

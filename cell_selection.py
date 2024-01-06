@@ -67,26 +67,41 @@ def cell_all_gene_toggle_key(cell: CellType):
     return f"all_gene_toggle_{cell.cell_type}"
 
 def cell_selection():
+    # Check if we have selected a tissue as we need it
     tissue_type = st.session_state.get("tissue_type", None)
     if not tissue_type:
         return
     st.info(f"Select cell types and genes for tissue type {tissue_type}", icon="6️⃣")
+    
+    # Create the search box
     search = st.text_input(
         "Search cells or add new",
         placeholder="type a cell name, for searching it can be partial, and press Enter",
         autocomplete="on",
     )
+
+    # Get the cell types optionally filtered by the text in the searchbox
     cell_types: list[CellType] = [
         c for c in st.session_state.cell_types if not (search) or search in c.cell_type
     ]
+
+    # Organize buttons under search box in three columns
     col1, col2, col3 = st.columns(3)
-    col1.button("Select all", on_click=on_cell_select_all, args=[cell_types, True])
-    col2.button("Deselect all", on_click=on_cell_select_all, args=[cell_types, False])
-    col3.button("Add", disabled=not search, on_click=add_clicked, args=[search])
+    
+    # Select all cell types and all their genes button
+    col1.button("Select all", help="Select all visible cell types and their genes" , on_click=on_cell_select_all, args=[cell_types, True])
+    # Unselect all cell types and all their genes button
+    col2.button("Deselect all", help="Unselect all visible cell types and their genes", on_click=on_cell_select_all, args=[cell_types, False])
+    # Add what it was written in the search box as a new cell type
+    col3.button("Add as new cell type", help="Add the typed text in the search box as new cell type", disabled=not search, on_click=add_clicked, args=[search])
+
+    # Render the cell type and their genes in a box for each cell type
+    # The columns here is to try to put two cell type boxes in one line
     columns = st.columns(2)
     for index, cell_type in enumerate(cell_types):
         with columns[index % 2]:
-            logger.info(cell_type.genes)
+            logger.debug(cell_type.genes)
+            # for each cell type create a box
             with st.container(border=True):
                 st.write(f"{cell_type.cell_type}")
                 cell_type.is_selected = st.toggle(
@@ -100,6 +115,7 @@ def cell_selection():
                     placeholder=f"select genes for [{cell_type.cell_type}]",
                     disabled=get_is_selected_value_of(cell_type),
                 )
+                # text box to add new gene symbols. They are separated by space. 
                 st.text_input(
                     label="Add new genes",
                     placeholder="Type new gene symbols separated by space and press Enter",

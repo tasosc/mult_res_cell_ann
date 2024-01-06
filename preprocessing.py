@@ -24,7 +24,7 @@ import gzip
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
-from utilities import Config
+from utilities import Config, Render
 
 class PreProcessing:
     """
@@ -66,15 +66,14 @@ class PreProcessing:
         """
         self.config = config
         self.adata = adata
-        self.render_fig_lambda = None
-        self.render_text_lambda = None
+        self.render = Render()
 
     def qc(self) -> None:
         """
         Run the Quality Control step
         """
         # Based on https://github.com/kostaslazaros/cell_annotation_web_app/blob/main/adata_preprocessor.py#L10
-        self.render_text(self.adata,3)
+        self.render.render_text(self.adata,3)
         fadata = self.adata
         n_genes_min=self.config.defaults["n_genes_min"]
         n_genes_max=self.config.defaults["n_genes_max"]
@@ -85,43 +84,43 @@ class PreProcessing:
         pc_rib = self.config.defaults["pc_rib"]
         # Pre-filtering
         sc.pp.filter_cells(fadata, min_genes=min_genes)  # Equivalent to min.features in Seurat.
-        self.render_text(f"Filtering cells with number of genes < {min_genes}: {fadata.shape}",2)
+        self.render.render_text(f"Filtering cells with number of genes < {min_genes}: {fadata.shape}",2)
 
         sc.pp.filter_genes(fadata, min_cells=min_cells)  # Equivalent to min.cells in Seurat.
-        self.render_text(f"Filtering genes expressed in < {min_cells} cells: {fadata.shape}",2)
+        self.render.render_text(f"Filtering genes expressed in < {min_cells} cells: {fadata.shape}",2)
 
         # Calculate the percentage of mitochondrial genes.
         mito_genes = fadata.var_names.str.startswith(tuple(['MT-', 'mt-', 'MT.', "mt."]))
         fadata.obs['prc_mt'] = (fadata[:, mito_genes].X.sum(axis=1) / fadata.X.sum(axis=1)) * 100
-        self.render_text("Mitochondrial gene percentage calculated and annotated in the prc_mt observation",2)
+        self.render.render_text("Mitochondrial gene percentage calculated and annotated in the prc_mt observation",2)
 
         # Calculate the percentage of ribosomal genes.
         ribo_genes = fadata.var_names.str.startswith('RPS')
         fadata.obs['prc_rb'] = (fadata[:, ribo_genes].X.sum(axis=1) / fadata.X.sum(axis=1)) * 100
-        self.render_text("Ribosomal gene percentage calculated and annotated in the prc_rb observation",2)
+        self.render.render_text("Ribosomal gene percentage calculated and annotated in the prc_rb observation",2)
 
         # Calculate number of genes and counts for each cell.
         fadata.obs['n_genes'] = (fadata.X > 0).sum(axis=1)
-        self.render_text("Calculate number of genes with non-zero counts",2)
+        self.render.render_text("Calculate number of genes with non-zero counts",2)
 
         fadata.obs['n_counts'] = fadata.X.sum(axis=1)
-        self.render_text("Calculate total number of counts for each cell",2)
+        self.render.render_text("Calculate total number of counts for each cell",2)
 
         # Subsetting the data based on the calculated values.
         fadata = fadata[fadata.obs['n_genes'] > n_genes_min, :]
-        self.render_text(f"Filter cells with too few genes detected: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too few genes detected: {fadata.shape}",2)
 
         fadata = fadata[fadata.obs['n_genes'] < n_genes_max, :]
-        self.render_text(f"Filter cells with too many genes detected: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many genes detected: {fadata.shape}",2)
 
         fadata = fadata[fadata.obs['n_counts'] < n_counts_max, :]
-        self.render_text(f"Filter cells with too many counts detected: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many counts detected: {fadata.shape}",2)
 
         fadata = fadata[fadata.obs['prc_mt'] < pc_mito, :]
-        self.render_text(f"Filter cells with too many mitochondrial genes expressed: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many mitochondrial genes expressed: {fadata.shape}",2)
 
         fadata = fadata[fadata.obs['prc_rb'] < pc_rib, :]
-        self.render_text(f"Filter cells with too many ribosomal genes expressed: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many ribosomal genes expressed: {fadata.shape}",2)
         self.adata = fadata
 
     def feature_selection(self) -> None:
@@ -129,16 +128,16 @@ class PreProcessing:
         Run the feature selection step, only if `config.get_bool("only_highly_significant_genes")` returns true
         """
         if self.config.get_bool("only_highly_significant_genes"):
-            self.render_text("Identify the most highly variable genes")
+            self.render.render_text("Identify the most highly variable genes")
             # Identify the most highly variable genes
             sc.pp.highly_variable_genes(self.adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
             # Filter higly variable genes
-            self.render_text("Filter high variable genes")
+            self.render.render_text("Filter high variable genes")
             self.adata.raw = self.adata
             self.adata = self.adata[:, self.adata.var.highly_variable]
-            self.render_text(self.adata,3)
+            self.render.render_text(self.adata,3)
         else:
-            self.render_text("Skipped")
+            self.render.render_text("Skipped")
 
     def normalization(self) -> None:
         """
@@ -174,7 +173,7 @@ class PreProcessing:
         # visualization
         # Calculate UMAP embeddings
         sc.tl.umap(self.adata)
-        self.render_fig(sc.pl.umap(
+        self.render.render_fig(sc.pl.umap(
             self.adata,
             color="leiden",
             title=f'Leiden clustering (Resolution: {self.config.defaults["cluster_resolution"]})',
@@ -184,49 +183,6 @@ class PreProcessing:
             return_fig=True,
         ), 1)
 
-    def set_render_fig_lambda(self, render_lambda):
-        """
-        Helper method that sets function to write figure output, e.g. in StreamLit it would be `st.pyplot`
-        """
-        self.render_fig_lambda = render_lambda
-
-    def set_render_text_lambda(self, render_lambda):
-        """
-        Helper method that sets function to write text and dataframe output, e.g. in StreamLit it would be `st.write`
-        """
-        self.render_text_lambda = render_lambda
-
-    def render_fig(self, fig, expected_verbosity=1):
-        """
-        Render the provided figure if the expected verbocity is equal or less than the configured verbocity
-
-        Parameters
-        ---------
-        fig: Matplotlib Figure
-            The figure. If it is None this method does nothing
-        expected_vebosity: int
-            The expected verbosity
-
-        """
-        if fig is None:
-            return
-        if self.render_fig_lambda:
-            self.render_fig_lambda(fig, expected_verbosity)
-
-    def render_text(self, something, expected_verbosity=1):
-        """
-        Render the provided something if the expected verbocity is equal or less than the configured verbocity
-
-        Parameters
-        ---------
-        something: Any | str | DataFrame
-            Something that could be written
-        expected_vebosity: int
-            The expected verbosity
-
-        """
-        if self.render_text_lambda:
-            self.render_text_lambda(something, expected_verbosity)
     @classmethod
     def build_from_csv(cls, path: PathLike|Iterator[str], config: Config):
         """

@@ -7,13 +7,13 @@
 To build the image with docker run the following command:
 
 ```sh
-docker build . -t eap/cellann_webapp
+docker build . -t tasosc/mult_res_cell_ann:latest
 ```
 
 Or to build with podman run the following
 
 ```sh
-podman build . -t eap/cellann_webapp --format docker
+podman build . -t tasosc/mult_res_cell_ann:latest --format docker
 ```
 
 ### Running the container
@@ -21,13 +21,13 @@ podman build . -t eap/cellann_webapp --format docker
 To run the container run the following command with docker:
 
 ```sh
-docker run --rm --name cellann_webapp -p 8501:8501  eap/cellann_webapp:latest
+docker run --rm --name mult_res_cell_ann -p 8501:8501  tasosc/mult_res_cell_ann:latest
 ```
 
 Or to run it with podman run:
 
 ```sh
-podman run --rm --name cellann_webapp -p 8501:8501  eap/cellann_webapp:latest
+podman run --rm --name mult_res_cell_ann -p 8501:8501  tasosc/mult_res_cell_ann:latest
 ```
 
 ### Accessing the application
