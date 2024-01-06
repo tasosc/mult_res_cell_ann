@@ -3,6 +3,7 @@
 Multi Resource Cell Annotation Web application is a web application that 
 uses multiple resources to help users perform automatic cell annotation.
 
+It is based on [Kostas Lazaros decoupleR example](https://github.com/kostaslazaros/cell_annotation_web_app)
 
 ## Requirements 
 
