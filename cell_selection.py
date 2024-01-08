@@ -97,29 +97,27 @@ def cell_selection():
 
     # Render the cell type and their genes in a box for each cell type
     # The columns here is to try to put two cell type boxes in one line
-    columns = st.columns(2)
     for index, cell_type in enumerate(cell_types):
-        with columns[index % 2]:
+        with st.expander(label=cell_type.cell_type):
             logger.debug(cell_type.genes)
             # for each cell type create a box
-            with st.container(border=True):
-                st.write(f"{cell_type.cell_type}")
-                cell_type.is_selected = st.toggle(
-                    f"Select all genes for {cell_type.cell_type}",
-                    value=get_is_selected_value_of(cell_type),
-                )
-                set_is_selected_value_of(cell_type, cell_type.is_selected)
+            cell_type.is_selected = st.toggle(
+                f"Select all genes for {cell_type.cell_type}",
+                value=get_is_selected_value_of(cell_type),
+            )
+            set_is_selected_value_of(cell_type, cell_type.is_selected)
+            if cell_type.genes:
                 cell_type.gene_selection = st.multiselect(
                     "Select specific genes",
                     options=cell_type.genes,
                     placeholder=f"select genes for [{cell_type.cell_type}]",
                     disabled=get_is_selected_value_of(cell_type),
                 )
-                # text box to add new gene symbols. They are separated by space. 
-                st.text_input(
-                    label="Add new genes",
-                    placeholder="Type new gene symbols separated by space and press Enter",
-                    key=genes_input_key(cell_type),
-                    on_change=add_gene,
-                    args=[cell_type],
-                )
+            # text box to add new gene symbols. They are separated by space. 
+            st.text_input(
+                label="Add new genes",
+                placeholder="Type new gene symbols separated by space and press Enter",
+                key=genes_input_key(cell_type),
+                on_change=add_gene,
+                args=[cell_type],
+            )
