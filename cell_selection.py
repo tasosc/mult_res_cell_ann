@@ -101,15 +101,15 @@ def cell_selection():
         with st.expander(label=cell_type.cell_type):
             logger.debug(cell_type.genes)
             # for each cell type create a box
-            cell_type.is_selected = st.toggle(
-                f"Select all genes for {cell_type.cell_type}",
-                value=get_is_selected_value_of(cell_type),
-            )
-            set_is_selected_value_of(cell_type, cell_type.is_selected)
             if cell_type.genes:
+                cell_type.is_selected = st.toggle(
+                    f"Select all genes for {cell_type.cell_type}",
+                    value=get_is_selected_value_of(cell_type),
+                )
+                set_is_selected_value_of(cell_type, cell_type.is_selected)
                 cell_type.gene_selection = st.multiselect(
                     "Select specific genes",
-                    options=cell_type.genes,
+                    options=sorted(cell_type.genes),
                     placeholder=f"select genes for [{cell_type.cell_type}]",
                     disabled=get_is_selected_value_of(cell_type),
                 )
