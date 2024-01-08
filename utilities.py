@@ -16,18 +16,20 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import base64
+import re
 import pandas as pd
 import json
 import logging
 from datetime import datetime
+
 class CellType:
     logger = logging.getLogger("CellType")
+    cell_combi = re.compile(r"cells?$", flags=re.I)
 
-    def __init__(self, json_cell=None, cell_name: str = None) -> None:
-        j = json_cell
-        self.cell_type = j["cell_type"] if j and "cell_type" in j else cell_name
+    def __init__(self, cell_name: str) -> None:
+        self.cell_type = cell_name
         self.is_selected = False
-        self.genes = set(j["genes"] if j and "genes" in j else [])
+        self.genes = set()
         self.gene_selection = None
         self.new_genes = None
 
@@ -73,11 +75,12 @@ class CellType:
             j = json.loads(json_cells)
             for c in j:
                 key = c["cell_type"]
+                key = cls.cell_combi.sub("cell", key)
                 if key not in cells_dict:
-                    cells_dict[key] = CellType(json_cell=c)
-                elif "genes" in c:
+                    cells_dict[key] = CellType(cell_name=key)
+                if "genes" in c:
                     cells_dict[key].add_genes(c["genes"])
-        return cells_dict.values()
+        return sorted(cells_dict.values(), key=lambda k: k.cell_type)
 
 class Config:
     def __init__(self) -> None:
