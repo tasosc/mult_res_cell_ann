@@ -100,16 +100,17 @@ def select_tissue_repo(store):
     tissue_type = st.session_state.get("tissue_type", None)
     if tissue_type:
         st.write("3️⃣Select one or more resources")
-        help_resource=[
-                """Oscar Franzén, Li-Ming Gan, Johan L M Björkegren, PanglaoDB: a web server for exploration of mouse and human single-cell RNA sequencing data, Database, Volume 2019, 2019, baz046, doi:10.1093/database/baz046""",
-                """Congxue Hu, Tengyue Li, Yingqi Xu, Xinxin Zhang, Feng Li, Jing Bai, Jing Chen, Wenqi Jiang, Kaiyue Yang, Qi Ou, Xia Li, Peng Wang, Yunpeng Zhang, CellMarker 2.0: an updated database of manually curated cell markers in human/mouse and web tools based on scRNA-seq data, Nucleic Acids Research, Volume 51, Issue D1, 6 January 2023, Pages D870–D876, https://doi.org/10.1093/nar/gkac947""",
-                """Quan, F., Liang, X., Cheng, M. et al. Annotation of cell types (ACT): a convenient web server for cell type annotation. Genome Med 15, 91 (2023). https://doi.org/10.1186/s13073-023-01249-5"""
-                ]
-        for idx, r in enumerate(["PangalaoDB", "CellMarker 2.0", "7k"]):
-            st.checkbox(r, key=r, on_change=on_repo_checked, help=help_resource[idx], args=[r])
+        help_resource={
+                "PangalaoDB":"""Oscar Franzén, Li-Ming Gan, Johan L M Björkegren, PanglaoDB: a web server for exploration of mouse and human single-cell RNA sequencing data, Database, Volume 2019, 2019, baz046, doi:10.1093/database/baz046""",
+                "CellMarker 2.0":"""Congxue Hu, Tengyue Li, Yingqi Xu, Xinxin Zhang, Feng Li, Jing Bai, Jing Chen, Wenqi Jiang, Kaiyue Yang, Qi Ou, Xia Li, Peng Wang, Yunpeng Zhang, CellMarker 2.0: an updated database of manually curated cell markers in human/mouse and web tools based on scRNA-seq data, Nucleic Acids Research, Volume 51, Issue D1, 6 January 2023, Pages D870–D876, https://doi.org/10.1093/nar/gkac947""",
+                "7k":"""Quan, F., Liang, X., Cheng, M. et al. Annotation of cell types (ACT): a convenient web server for cell type annotation. Genome Med 15, 91 (2023). https://doi.org/10.1186/s13073-023-01249-5"""
+        }
+        repos=store.get_repos_for_tissue(tissue_type)
+        for r in repos:
+            st.checkbox(r, key=r, on_change=on_repo_checked, help=help_resource[r], args=[r])
         st.button(
-                "4️⃣Ensemble",
-                help="Ensemble Cell Types: View cell types derived from chosen prior knowledge resources corresponding to the selected tissue or organ. Explore each cell type along with its associated set of genes. Click to access a comprehensive overview of identified cell types and their associated genetic signatures, aiding in comparative analysis and understanding of cellular compositions.",
+                "4️⃣Query selected resources",
+                help="Query Cell Types: View cell types derived from chosen prior knowledge resources corresponding to the selected tissue or organ. Explore each cell type along with its associated set of genes. Click to access a comprehensive overview of identified cell types and their associated genetic signatures, aiding in comparative analysis and understanding of cellular compositions.",
                 disabled=not (st.session_state.repos),
                 on_click=ensemble_clicked,
             )
