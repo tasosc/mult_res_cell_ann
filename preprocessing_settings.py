@@ -44,6 +44,7 @@ def show_pp_settings(config):
         "Reading CSV, field delimiter",
         key="config_csv_delimiter",
         max_chars=1,
+        help='Enter the CSV delimiter. In case of tab type `T`',
         on_change=on_config_change,
         args=["csv_delimiter"],
         value=config.defaults["csv_delimiter"],
