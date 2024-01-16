@@ -30,8 +30,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="auto",
     menu_items={
-        "Get Help": "https://github.com/kostaslazaros/cell_annotation_web_app/blob/main/README.md",
-        "Report a bug": "https://github.com/kostaslazaros/cell_annotation_web_app/issues",
+        "Get Help": "https://github.com/tasosc/mult_res_cell_ann/blob/main/README.md",
+        "Report a bug": "https://github.com/tasosc/mult_res_cell_ann/issues",
         "About": """# This is a web app that can be used to automatically annotate single-cell RNA-seq dataset 
         by cell-type using prior knowledge databases and the decoupleR's python implementation. 
         It was based on https://github.com/kostaslazaros/cell_annotation_web_app""",
@@ -42,7 +42,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 logger = logging.getLogger("main_web_app")
 logger.info("Starting")
-st.header("Cell annotation with decoupleR")
+st.header("Multi Resource Cell Annotation (with decoupleR)")
 # initialize
 
 
