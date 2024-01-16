@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+from io import StringIO
 import logging
 from os import PathLike
 from typing import Iterator
@@ -195,7 +196,8 @@ class PreProcessing:
         confg: Config
             Configuration options for various preprocessing commands
         """
-        adata = sc.read_csv(path, delimiter=config.defaults["csv_delimiter"], first_column_names=True).T
+        delimiter = '\t' if config.defaults["csv_delimiter"] == 'T' else config.defaults["csv_delimiter"]
+        adata = sc.read_csv(path, delimiter=delimiter, first_column_names=True).T
         return PreProcessing(adata, config)
     @classmethod
     def build_from_hdf5(cls, path: PathLike|Iterator[str], config: Config):
@@ -232,7 +234,7 @@ class PreProcessing:
         config.defaults["data"]=Path(uploaded_file.name).stem
         if uploaded_file.type != 'application/gzip':
             if uploaded_file.name.endswith(".csv"):
-                return cls.build_from_csv(path=uploaded_file, config=config)
+                return cls.build_from_csv(path=StringIO(uploaded_file.getvalue().decode("utf-8")), config=config)
             return cls.build_from_hdf5(path=uploaded_file, config=config)
 
         with gzip.open(uploaded_file, mode='rt') as gcsv:
