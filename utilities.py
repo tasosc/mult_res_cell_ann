@@ -35,7 +35,7 @@ class CellType:
 
     def add_genes(self, genes: list[str]):
         self.genes.update(genes)
-        self.logger.info(f"Added genes {genes} to {self.genes}")
+        self.logger.debug(f"Added genes {genes} to {self.genes}")
 
     def set_new_genes(self, genes: list[str]):
         if genes:
@@ -109,7 +109,7 @@ class ImportExport:
     @classmethod
     def export(cls, config : Config, tissue: str, cells : list[CellType]|None) -> str:
         cells = cells if cells else []
-        cls.logger.info("Cells given with selected value %s", any(map(lambda x: x.has_selected(), cells)))
+        cls.logger.debug("Cells given with selected value %s", any(map(lambda x: x.has_selected(), cells)))
         cells = [c.__dict__ for c in cells]
         # sanitize config.defaults
         c=dict(config.defaults)
@@ -124,7 +124,7 @@ class ImportExport:
     @classmethod
     def export_link(cls, config : Config, tissue: str, cells : list[CellType]|None) -> str:
         cells = cells if cells else []
-        cls.logger.info("Cells given with selected value %s", any(map(lambda x: x.has_selected(), cells)))
+        cls.logger.debug("Cells given with selected value %s", any(map(lambda x: x.has_selected(), cells)))
         cells = [c.__dict__ for c in cells]
         # sanitize config.defaults
         c=dict(config.defaults)
@@ -139,7 +139,7 @@ class ImportExport:
     @classmethod
     def import_selections(cls ,uploaded_file)-> tuple[dict, str, list[CellType]]:
         obj=json.load(uploaded_file)
-        cls.logger.info(obj)
+        cls.logger.debug(obj)
         config = obj.get('config', None)
         
         tissue = obj.get('tissue', None )
