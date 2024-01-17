@@ -45,6 +45,8 @@ def tissue_changed():
 
 def on_repo_checked(repo):
     logger.info("repo %s, st.session_state %s", repo, st.session_state.get(repo))
+    clear_cell_types()
+    clear_clicked(Buttons.Ensemble)
     if st.session_state.get(repo):
         st.session_state.repos.add(repo)
     else:
