@@ -183,11 +183,29 @@ class PreProcessing:
             legend_fontsize=10,
             return_fig=True,
         ), 1)
+    @classmethod
+    def build_from_txt(cls, path: PathLike|Iterator[str], config: Config):
+        """
+        Build a class instance from a txt  file.
+
+        e.g. https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM4773521
+
+        Parameters
+        ----------
+        path : PathLike|Iterator[str]
+            The single cell RNA sequencing dataset as a file or something read-able
+        confg: Config
+            Configuration options for various preprocessing commands
+        """
+        adata = sc.read_text(path, first_column_names=True).T
+        return PreProcessing(adata, config)
 
     @classmethod
     def build_from_csv(cls, path: PathLike|Iterator[str], config: Config):
         """
         Build a class instance from a csv file.
+
+        e.g. https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5226584
 
         Parameters
         ----------
@@ -234,8 +252,15 @@ class PreProcessing:
         config.defaults["data"]=Path(uploaded_file.name).stem
         if uploaded_file.type != 'application/gzip':
             if uploaded_file.name.endswith(".csv"):
-                return cls.build_from_csv(path=StringIO(uploaded_file.getvalue().decode("utf-8")), config=config)
+                with StringIO(uploaded_file.getvalue().decode("utf-8")) as csv:
+                    return cls.build_from_csv(path=csv, config=config)
+            if uploaded_file.name.endswith(".txt"):
+                with StringIO(uploaded_file.getvalue().decode("utf-8")) as txt:
+                    return cls.build_from_txt(path=txt, config=config)
+
             return cls.build_from_hdf5(path=uploaded_file, config=config)
 
         with gzip.open(uploaded_file, mode='rt') as gcsv:
+            if uploaded_file.name.endswith(".txt.gz"):
+                return cls.build_from_txt(path=gcsv, config=config)
             return cls.build_from_csv(path=gcsv, config=config)

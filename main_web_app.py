@@ -83,7 +83,7 @@ with st.sidebar:
         help="The application supports either .h5ad or .csv files. The csv files can be compressed with gzip.By default it will use predefined Prostate test data",
         key="data_upload",
         on_change=on_upload,
-        type=["h5ad", "csv", "csv.gz"],
+        type=["h5ad", "csv", "csv.gz", "txt", "txt.gz"],
     )
     tissue_options = ["Database", "Saved selection"]
     tissue_option = st.radio(
