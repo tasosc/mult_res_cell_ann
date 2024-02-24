@@ -53,7 +53,7 @@ class StructureIdentification:
     si.write_ann_ds(output)
     ```
 
-    Note the `si.adata` is modified through out the steps and may not be the same object
+    Note the `si.adata` is modified throughout the steps and may not be the same object
 
     """
 
@@ -65,12 +65,13 @@ class StructureIdentification:
         ----------
         adata : anndata.AnnData
             The single cell RNA sequencing dataset, it expects to use the :attr:`~preprocessing.PreProcessing.adata` after all Pre Processing steps have run
-        confg: Config
+        config: Config
             Configuration options for various preprocessing commands
         """
         self.config = config
         self.adata = adata
         self.render = Render()
+        self.acts = None
 
     def clustering(self, cell_types: list[CellType]):
         """
@@ -128,7 +129,8 @@ class StructureIdentification:
         )
         self.render.render_fig(self.cluster_vln_plot(melted_df))
 
-    def __create_melted_df(self, score_df, ctype_lst):
+    @staticmethod
+    def __create_melted_df(score_df, ctype_lst):
         """
         Create the melted dataframe, unpivoting (columns to values) the dataframe but leaving some IDs intact
         Copied as it is from https://github.com/kostaslazaros/cell_annotation_web_app/blob/main/adata_preprocessor.py#L96
@@ -191,7 +193,7 @@ class StructureIdentification:
         ]
         # Visualize final cell-type annotation result
         self.render.render_text("Visualize final cell-type annotation result", 2)
-        plt = sc.pl.umap(
+        umap_plot = sc.pl.umap(
             self.adata,
             color="cell_type",
             title="decoupleR cell annotation",
@@ -200,11 +202,11 @@ class StructureIdentification:
             legend_fontsize=10,
             return_fig=True,
         )
-        self.render.render_fig(plt, 1)
+        self.render.render_fig(umap_plot, 1)
 
     def write_ann_ds(self, output: PathLike):
         """
-        Write the annotated :attr:`~adata` to a HDF 5 (h5ad) file.
+        Write the annotated :attr:`~adata` to an HDF 5 (h5ad) file.
         """
         self.adata.write_h5ad(output, compression=hdf5plugin.FILTERS["zstd"])
 
@@ -268,5 +270,6 @@ class StructureIdentification:
         plt.tight_layout()
         return plt
 
-    def filtered_marker(self, cell_types: list[CellType]) -> pd.DataFrame:
+    @staticmethod
+    def filtered_marker(cell_types: list[CellType]) -> pd.DataFrame:
         return pd.concat([c.get_selected() for c in cell_types], ignore_index=True)

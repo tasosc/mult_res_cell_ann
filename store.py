@@ -25,7 +25,7 @@ class Store:
     def __init__(self) -> None:
         self.con = sqlite3.connect("file:data/cells.db?mode=ro", uri=True)
 
-    def __query(self, sqlquery : str, parameters=()):
+    def __query(self, sqlquery: str, parameters=()):
         self.logger.debug("Running %s", sqlquery)
         cur: sqlite3.Cursor
         with closing(self.con.cursor()) as cur:
@@ -33,7 +33,7 @@ class Store:
             self.logger.debug("done running %s", sqlquery)
             return res.fetchall()
 
-    def __query_one_column(self, sqlquery : str, parameters=()):
+    def __query_one_column(self, sqlquery: str, parameters=()):
         return [res[0] for res in self.__query(sqlquery, parameters)]
 
     def get_tissue_types(self):
@@ -45,6 +45,7 @@ class Store:
         return self.__query_one_column(
             f'select cell_data from cells c where exists (select 1 from tissues t where tissue_name=? and c.tissue_id = t.rowid) and exists (select 1 from repos r where repo_name in ({parameters}) and c.repo_id = r.repo_id)',
             (tissue_type,) + tuple(repos))
+
     def get_repos_for_tissue(self, tissue_type: str):
         return self.__query_one_column('''
                     select r.repo_name 
@@ -55,5 +56,3 @@ class Store:
                         inner join tissues t on c.tissue_id = t.rowid 
                         where t.tissue_name = ? and r.repo_id  = c.repo_id)
             ''', (tissue_type,))
-
-

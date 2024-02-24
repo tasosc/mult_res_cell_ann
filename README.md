@@ -25,7 +25,7 @@ podman run --rm --name multi_res_cell_all -p 8501:8501  tasosc/mult_res_cell_ann
 
 ## Running directly with Python (Linux)
 
-First you need to setup the virtual environment, [more information](https://docs.python.org/3/library/venv.html)
+First you need to set up the virtual environment, [more information](https://docs.python.org/3/library/venv.html)
 Note in some Linux distributions instead of `python` you need to call `python3.11` or `python3`
 
 ```sh
@@ -68,7 +68,7 @@ Now we need to install the dependencies for web application:
 pip install -r requirements.txt
 ```
 
-Finally run the application:
+Finally, run the application:
 
 ```sh
 streamlit run main_web_app.py

@@ -16,14 +16,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 import logging
+from pathlib import Path
 from tempfile import NamedTemporaryFile
-from cell_structure_id import StructureIdentification
-from preprocessing import PreProcessing
-from utilities import Config
-
 
 import streamlit as st
 
+from cell_structure_id import StructureIdentification
+from preprocessing import PreProcessing
+from utilities import Config
 
 logger = logging.getLogger("run_analysis")
 
@@ -33,12 +33,12 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
     verbosity = config.defaults["verbosity"]
 
     def render_fig(fig, expected_verbosity=1):
-        if (verbosity < expected_verbosity):
+        if verbosity < expected_verbosity:
             return
         st.pyplot(fig=fig)
 
     def render_text(something, expected_verbosity=1):
-        if (verbosity < expected_verbosity):
+        if verbosity < expected_verbosity:
             return
         st.write(something)
 
@@ -71,7 +71,7 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
     status.update(label="Running quality control", state="running", expanded=True)
     st.subheader("Quality Control")
     pp.qc()
-    render_text(pp.adata,3)
+    render_text(pp.adata, 3)
     status.update(label="Running normalization", state="running", expanded=True)
     st.subheader("Normalization")
     pp.normalization()
@@ -109,11 +109,12 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
     st.subheader("Annotation")
     si.annotation()
 
-    st.subheader("Prepering annotated dataset")
+    st.subheader("Preparing annotated dataset")
     with NamedTemporaryFile() as tmp:
         # Write the annotated dataset to download_file
-        si.write_ann_ds(tmp.name)
-        with open(tmp.name, "rb") as download_file:
+        tmp_path = Path(tmp.name)
+        si.write_ann_ds(tmp_path)
+        with open(tmp_path, "rb") as download_file:
             st.sidebar.download_button(
                     label="8️⃣Download annotated dataset and clear analysis",
                     data=download_file,
@@ -122,4 +123,4 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
                     mime="application/x-hdf5"
                     )
     status.update(label="Analysis completed.", state="complete", expanded=True)
-    st.success("Automatic analysis successfuly completed. You can optionally ⋮ -> Print and then Download the results.", icon="✅")
+    st.success("Automatic analysis successfully completed. You can optionally ⋮ -> Print and then Download the results.", icon="✅")

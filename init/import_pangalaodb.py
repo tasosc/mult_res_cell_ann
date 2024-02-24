@@ -26,68 +26,73 @@ import logging
 import urllib.parse
 import json
 import gzip
+
 logger = logging.getLogger(__file__)
 
 """
 Download from https://panglaodb.se/markers/PanglaoDB_markers_27_Mar_2020.tsv.gz
 """
+
+
 def build_filename(cache_dir):
     return os.path.join(cache_dir, 'PanglaoDB_markers_27_Mar_2020.tsv.gz')
+
 
 def build_url():
     return urllib.parse.quote('/markers/PanglaoDB_markers_27_Mar_2020.tsv.gz')
 
+
 def build_import_object(file_path):
-    repo=list()
+    repo = list()
     with gzip.open(file_path, mode="rt", newline='') as file:
-        reader=csv.reader(file, delimiter='\t')
+        reader = csv.reader(file, delimiter='\t')
         next(reader)
-        tissue_dict=dict()
+        tissue_dict = dict()
         for row in reader:
             # species	official gene symbol	cell type	nicknames	ubiquitousness index	product description	gene type	canonical marker	germ layer	organ	sensitivity_human	sensitivity_mouse	specificity_human	specificity_mouse
-            if 'Hs' in row[0]: # Only Human
+            if 'Hs' in row[0]:  # Only Human
                 cell_type = row[2]
-                gene=row[1]
-                tissue=row[9]
+                gene = row[1]
+                tissue = row[9]
                 if tissue not in tissue_dict:
-                    tissue_dict[tissue]=dict()
-                cell_dict=tissue_dict[tissue]
+                    tissue_dict[tissue] = dict()
+                cell_dict = tissue_dict[tissue]
                 if cell_type not in cell_dict:
-                    cell_dict[cell_type]=list()
+                    cell_dict[cell_type] = list()
                 cell_dict[cell_type].append(gene)
-        for tissue, cell_dict in tissue_dict.items():
-            cells=list()
-            for cell_type, genes in cell_dict.items():
-                cell={"cell_type": cell_type, "genes":genes}
-                cells.append(cell)
-            repo.append({"tissue": tissue, "repo": "PangalaoDB", "cells":cells})
-    return repo
+    return build_common_model(repo, tissue_dict)
+
 
 def build_import_object_omni():
-    repo=list()
-    df : pd.DataFrame = dc.get_resource("PanglaoDB")
-    df = df=df[df["human"] == 'True']
+    repo = list()
+    df: pd.DataFrame = dc.get_resource("PanglaoDB")
+    df = df[df["human"] == 'True']
     df = df[["genesymbol", "cell_type", "organ"]]
     df = df.dropna()
-    tissue_dict=dict()
+    tissue_dict = dict()
     for row in df.to_numpy():
-        # species	official gene symbol	cell type	nicknames	ubiquitousness index	product description	gene type	canonical marker	germ layer	organ	sensitivity_human	sensitivity_mouse	specificity_human	specificity_mouse
         cell_type = row[1]
-        gene=row[0]
-        tissue=row[2]
+        gene = row[0]
+        tissue = row[2]
         if tissue not in tissue_dict:
-            tissue_dict[tissue]=dict()
-        cell_dict=tissue_dict[tissue]
+            tissue_dict[tissue] = dict()
+        cell_dict = tissue_dict[tissue]
         if cell_type not in cell_dict:
-            cell_dict[cell_type]=list()
+            cell_dict[cell_type] = list()
         cell_dict[cell_type].append(gene)
+    return build_common_model(repo, tissue_dict)
+
+
+def build_common_model(repo, tissue_dict):
     for tissue, cell_dict in tissue_dict.items():
-        cells=list()
+        cells = list()
         for cell_type, genes in cell_dict.items():
-            cell={"cell_type": cell_type, "genes":genes}
+            cell = {"cell_type": cell_type, "genes": genes}
             cells.append(cell)
-        repo.append({"tissue": tissue, "repo": "PangalaoDB", "cells":cells})
+        repo.append({"tissue": tissue, "repo": "PanglaoDB", "cells": cells})
     return repo
+
+
 def download(http_conn: http.client.HTTPConnection, cache_file):
     url = build_url()
     logger.info("Downloading %s", url)
@@ -102,24 +107,27 @@ def download(http_conn: http.client.HTTPConnection, cache_file):
             logger.error("Cannot GET %s , server responded with %d reason %s", url, response.status, response.reason)
             raise ImportError("couldn't download")
 
+
 def download_if_not_cached(cache_dir):
     with closing(http.client.HTTPSConnection("panglaodb.se")) as http_conn:
-        file_path=build_filename(cache_dir)
+        file_path = build_filename(cache_dir)
         if not os.path.exists(file_path):
             download(http_conn, file_path)
         if os.path.exists(file_path) and os.stat(file_path).st_size > 0:
             return file_path
     raise IOError("Cannot download data")
 
+
 def init_pangalaodb(base_cache_dir):
     try:
         return build_import_object_omni()
     except Exception as e:
-        logger.error("While trying to get data from omnipath %s",e, exc_info=1, stack_info=True)
-        cache_dir=os.path.join(base_cache_dir, 'pangalaodb')
+        logger.error("While trying to get data from omnipath %s", e, exc_info=1, stack_info=True)
+        cache_dir = os.path.join(base_cache_dir, 'pangalaodb')
         os.makedirs(cache_dir, exist_ok=True)
-        cache_file=download_if_not_cached(cache_dir)
+        cache_file = download_if_not_cached(cache_dir)
         return build_import_object(cache_file)
 
+
 if __name__ == '__main__':
-    print(json.dumps(init_pangalaodb('cache'))) 
+    print(json.dumps(init_pangalaodb('cache')))

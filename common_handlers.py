@@ -17,22 +17,24 @@
 from enum import Enum
 import streamlit as st
 
+
 class Buttons(Enum):
     Ensemble = 1
     Add = 2
     Run = 4
-    
+
 
 def button_clicked(button_name: Buttons):
     st.session_state.clicked[button_name.value] = True
 
+
 def was_clicked(button_name: Buttons) -> bool:
     return (
-        st.session_state.clicked
-        and button_name.value in st.session_state.clicked
-        and st.session_state.clicked[button_name.value]
+            st.session_state.clicked
+            and button_name.value in st.session_state.clicked
+            and st.session_state.clicked[button_name.value]
     )
+
 
 def clear_clicked(button_name: Buttons):
     st.session_state.clicked[button_name.value] = False
-

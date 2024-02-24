@@ -27,6 +27,7 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 from utilities import Config, Render
 
+
 class PreProcessing:
     """
     Contains the methods for pre-processing
@@ -50,10 +51,11 @@ class PreProcessing:
     pp.visualization()
     ```
 
-    Note the `pp.adata` is modified through out the steps and will not be the same object
+    Note the `pp.adata` is modified throughout the steps and will not be the same object
 
     """
     logger = logging.getLogger("PreProcessing")
+
     def __init__(self, adata: anndata.AnnData, config: Config) -> None:
         """
         Create a new instance of PreProcessing class
@@ -62,7 +64,7 @@ class PreProcessing:
         ----------
         adata : anndata.AnnData
             The single cell RNA sequencing dataset
-        confg: Config
+        config: Config
             Configuration options for various preprocessing commands
         """
         self.config = config
@@ -74,54 +76,54 @@ class PreProcessing:
         Run the Quality Control step
         """
         # Based on https://github.com/kostaslazaros/cell_annotation_web_app/blob/main/adata_preprocessor.py#L10
-        self.render.render_text(self.adata,3)
+        self.render.render_text(self.adata, 3)
         fadata = self.adata
-        n_genes_min=self.config.defaults["n_genes_min"]
-        n_genes_max=self.config.defaults["n_genes_max"]
-        min_genes=self.config.defaults["min_genes"]
-        min_cells=self.config.defaults["min_cells"]
-        n_counts_max=self.config.defaults["n_counts_max"]
+        n_genes_min = self.config.defaults["n_genes_min"]
+        n_genes_max = self.config.defaults["n_genes_max"]
+        min_genes = self.config.defaults["min_genes"]
+        min_cells = self.config.defaults["min_cells"]
+        n_counts_max = self.config.defaults["n_counts_max"]
         pc_mito = self.config.defaults["pc_mito"]
         pc_rib = self.config.defaults["pc_rib"]
         # Pre-filtering
         sc.pp.filter_cells(fadata, min_genes=min_genes)  # Equivalent to min.features in Seurat.
-        self.render.render_text(f"Filtering cells with number of genes < {min_genes}: {fadata.shape}",2)
+        self.render.render_text(f"Filtering cells with number of genes < {min_genes}: {fadata.shape}", 2)
 
         sc.pp.filter_genes(fadata, min_cells=min_cells)  # Equivalent to min.cells in Seurat.
-        self.render.render_text(f"Filtering genes expressed in < {min_cells} cells: {fadata.shape}",2)
+        self.render.render_text(f"Filtering genes expressed in < {min_cells} cells: {fadata.shape}", 2)
 
         # Calculate the percentage of mitochondrial genes.
         mito_genes = fadata.var_names.str.startswith(tuple(['MT-', 'mt-', 'MT.', "mt."]))
         fadata.obs['prc_mt'] = (fadata[:, mito_genes].X.sum(axis=1) / fadata.X.sum(axis=1)) * 100
-        self.render.render_text("Mitochondrial gene percentage calculated and annotated in the prc_mt observation",2)
+        self.render.render_text("Mitochondrial gene percentage calculated and annotated in the prc_mt observation", 2)
 
         # Calculate the percentage of ribosomal genes.
         ribo_genes = fadata.var_names.str.startswith('RPS')
         fadata.obs['prc_rb'] = (fadata[:, ribo_genes].X.sum(axis=1) / fadata.X.sum(axis=1)) * 100
-        self.render.render_text("Ribosomal gene percentage calculated and annotated in the prc_rb observation",2)
+        self.render.render_text("Ribosomal gene percentage calculated and annotated in the prc_rb observation", 2)
 
         # Calculate number of genes and counts for each cell.
         fadata.obs['n_genes'] = (fadata.X > 0).sum(axis=1)
-        self.render.render_text("Calculate number of genes with non-zero counts",2)
+        self.render.render_text("Calculate number of genes with non-zero counts", 2)
 
         fadata.obs['n_counts'] = fadata.X.sum(axis=1)
-        self.render.render_text("Calculate total number of counts for each cell",2)
+        self.render.render_text("Calculate total number of counts for each cell", 2)
 
         # Subsetting the data based on the calculated values.
         fadata = fadata[fadata.obs['n_genes'] > n_genes_min, :]
-        self.render.render_text(f"Filter cells with too few genes detected: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too few genes detected: {fadata.shape}", 2)
 
         fadata = fadata[fadata.obs['n_genes'] < n_genes_max, :]
-        self.render.render_text(f"Filter cells with too many genes detected: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many genes detected: {fadata.shape}", 2)
 
         fadata = fadata[fadata.obs['n_counts'] < n_counts_max, :]
-        self.render.render_text(f"Filter cells with too many counts detected: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many counts detected: {fadata.shape}", 2)
 
         fadata = fadata[fadata.obs['prc_mt'] < pc_mito, :]
-        self.render.render_text(f"Filter cells with too many mitochondrial genes expressed: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many mitochondrial genes expressed: {fadata.shape}", 2)
 
         fadata = fadata[fadata.obs['prc_rb'] < pc_rib, :]
-        self.render.render_text(f"Filter cells with too many ribosomal genes expressed: {fadata.shape}",2)
+        self.render.render_text(f"Filter cells with too many ribosomal genes expressed: {fadata.shape}", 2)
         self.adata = fadata
 
     def feature_selection(self) -> None:
@@ -136,7 +138,7 @@ class PreProcessing:
             self.render.render_text("Filter high variable genes")
             self.adata.raw = self.adata
             self.adata = self.adata[:, self.adata.var.highly_variable]
-            self.render.render_text(self.adata,3)
+            self.render.render_text(self.adata, 3)
         else:
             self.render.render_text("Skipped")
 
@@ -183,8 +185,9 @@ class PreProcessing:
             legend_fontsize=10,
             return_fig=True,
         ), 1)
+
     @classmethod
-    def build_from_txt(cls, path: PathLike|Iterator[str], config: Config):
+    def build_from_txt(cls, path: PathLike | Iterator[str], config: Config):
         """
         Build a class instance from a txt  file.
 
@@ -194,14 +197,14 @@ class PreProcessing:
         ----------
         path : PathLike|Iterator[str]
             The single cell RNA sequencing dataset as a file or something read-able
-        confg: Config
+        config: Config
             Configuration options for various preprocessing commands
         """
         adata = sc.read_text(path, first_column_names=True).T
         return PreProcessing(adata, config)
 
     @classmethod
-    def build_from_csv(cls, path: PathLike|Iterator[str], config: Config):
+    def build_from_csv(cls, path: PathLike | Iterator[str], config: Config):
         """
         Build a class instance from a csv file.
 
@@ -211,14 +214,15 @@ class PreProcessing:
         ----------
         path : PathLike|Iterator[str]
             The single cell RNA sequencing dataset as a file or something read-able
-        confg: Config
+        config: Config
             Configuration options for various preprocessing commands
         """
         delimiter = '\t' if config.defaults["csv_delimiter"] == 'T' else config.defaults["csv_delimiter"]
         adata = sc.read_csv(path, delimiter=delimiter, first_column_names=True).T
         return PreProcessing(adata, config)
+
     @classmethod
-    def build_from_hdf5(cls, path: PathLike|Iterator[str], config: Config):
+    def build_from_hdf5(cls, path: PathLike, config: Config):
         """
         Build a class instance from a HDF5 file.
 
@@ -226,13 +230,14 @@ class PreProcessing:
         ----------
         path : PathLike|Iterator[str]
             The single cell RNA sequencing dataset as a file or something read-able
-        confg: Config
+        config: Config
             Configuration options for various preprocessing commands
         """
         adata = sc.read_h5ad(path)
         return PreProcessing(adata=adata, config=config)
+
     @classmethod
-    def build_from(cls, uploaded_file, config :Config):
+    def build_from(cls, uploaded_file, config: Config):
         """
          Build a class instance from a HDF5 or CSV (gzip'ed or not) file.
 
@@ -240,16 +245,16 @@ class PreProcessing:
         ----------
         uploaded_file : PathLike|Iterator[str] with .name and .type fields
             The single cell RNA sequencing dataset as a file or something read-able
-        confg: Config
+        config: Config
             Configuration options for various preprocessing commands
         """
         if config is None:
             raise ValueError("Internal error, configuration not found")
         if uploaded_file is None:
-            config.defaults["data"]=Path(config.defaults["h5ad_path"]).stem
+            config.defaults["data"] = Path(config.defaults["h5ad_path"]).stem
             return cls.build_from_hdf5(path=config.defaults["h5ad_path"], config=config)
         cls.logger.info(f"filename:{uploaded_file.name} and type {uploaded_file.type}")
-        config.defaults["data"]=Path(uploaded_file.name).stem
+        config.defaults["data"] = Path(uploaded_file.name).stem
         if uploaded_file.type != 'application/gzip':
             if uploaded_file.name.endswith(".csv"):
                 with StringIO(uploaded_file.getvalue().decode("utf-8")) as csv:

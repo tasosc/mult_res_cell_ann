@@ -24,6 +24,7 @@ from selection_manager import restore_selection, save_current_selection, select_
 from store import Store
 from utilities import CellType, Config
 from preprocessing_settings import show_pp_settings
+
 st.set_page_config(
     page_title="Multi Resource Cell Annotation (with decoupleR)",
     page_icon="🦠",
@@ -63,6 +64,7 @@ if was_clicked(Buttons.Add):
     clear("new_cell_genes")
     clear_clicked(Buttons.Add)
 
+
 # TODO this is left from old code
 def on_upload():
     # user has not set yet the configuration settings we cannot build pre-processing object
@@ -70,6 +72,7 @@ def on_upload():
         del st.session_state["preprocessing"]
     if "structure_id" in st.session_state:
         del st.session_state["structure_id"]
+
 
 if "config" not in st.session_state:
     st.session_state.config = Config()
@@ -104,9 +107,9 @@ with st.sidebar:
     tissue_type = st.session_state.get("tissue_type", None)
 
     # Advanced settings
-    if st.toggle("5️⃣Parameter Adjustment and advanced settings", help="Parameter Adjustment: Customize general and pre-processing parameters for single-cell RNA sequencing analysis. These controls enable fine-tuning of various settings such as filtering criteria, normalization methods, dimensionality reduction techniques, and other essential parameters. Adjust these settings to tailor data processing according to specific analysis requirements."):
+    if st.toggle("5️⃣Parameter Adjustment and advanced settings",
+                 help="Parameter Adjustment: Customize general and pre-processing parameters for single-cell RNA sequencing analysis. These controls enable fine-tuning of various settings such as filtering criteria, normalization methods, dimensionality reduction techniques, and other essential parameters. Adjust these settings to tailor data processing according to specific analysis requirements."):
         show_pp_settings(config)
-
 
 if was_clicked(Buttons.Ensemble):
     if "cell_types" not in st.session_state:
@@ -118,9 +121,10 @@ if was_clicked(Buttons.Ensemble):
             )
         )
 
-    if st.sidebar.button("7️⃣Run Analysis", help="Run Automated Cell Type Annotation: Activate automated analysis to enrich the uploaded single-cell RNA sequencing dataset with cell type annotations. Prior selection of specific cell types and their expressing genes is required. This analysis augments the dataset with refined cell type information, leveraging chosen markers to classify and annotate cells, enhancing the understanding of cellular heterogeneity and functional characterization"):
+    if st.sidebar.button("7️⃣Run Analysis",
+                         help="Run Automated Cell Type Annotation: Activate automated analysis to enrich the uploaded single-cell RNA sequencing dataset with cell type annotations. Prior selection of specific cell types and their expressing genes is required. This analysis augments the dataset with refined cell type information, leveraging chosen markers to classify and annotate cells, enhancing the understanding of cellular heterogeneity and functional characterization"):
         can_run = any(map(lambda x: x.has_selected(), st.session_state.cell_types))
-        if not (can_run):
+        if not can_run:
             st.warning("Select some cells and genes first", icon="🚨")
         else:
             with st.status("Running analysis..", expanded=True) as status:
