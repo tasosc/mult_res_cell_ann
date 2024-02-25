@@ -65,15 +65,6 @@ if was_clicked(Buttons.Add):
     clear_clicked(Buttons.Add)
 
 
-# TODO this is left from old code
-def on_upload():
-    # user has not set yet the configuration settings we cannot build pre-processing object
-    if "preprocessing" in st.session_state:
-        del st.session_state["preprocessing"]
-    if "structure_id" in st.session_state:
-        del st.session_state["structure_id"]
-
-
 if "config" not in st.session_state:
     st.session_state.config = Config()
 
@@ -85,7 +76,6 @@ with st.sidebar:
         "1️⃣Select the file containing the single cell RNA sequencing dataset.",
         help="The application supports either .h5ad or .csv files. The csv files can be compressed with gzip.By default it will use predefined Prostate test data",
         key="data_upload",
-        on_change=on_upload,
         type=["h5ad", "csv", "csv.gz", "txt", "txt.gz"],
     )
     tissue_options = ["Database", "Saved selection"]
