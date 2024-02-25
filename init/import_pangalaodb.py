@@ -122,7 +122,7 @@ def init_pangalaodb(base_cache_dir):
     try:
         return build_import_object_omni()
     except Exception as e:
-        logger.error("While trying to get data from omnipath %s", e, exc_info=1, stack_info=True)
+        logger.error("While trying to get data from omnipath %s", e, exc_info=True, stack_info=True)
         cache_dir = os.path.join(base_cache_dir, 'pangalaodb')
         os.makedirs(cache_dir, exist_ok=True)
         cache_file = download_if_not_cached(cache_dir)

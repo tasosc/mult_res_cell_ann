@@ -51,7 +51,7 @@ def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
         pp.render.set_render_fig_lambda(render_fig)
         pp.render.set_render_text_lambda(render_text)
     except Exception as e:
-        logger.info("Could not parse file. Reason %s", repr(e), exc_info=1, stack_info=True)
+        logger.info("Could not parse file. Reason %s", repr(e), exc_info=True, stack_info=True)
         status.update(label="Could not parse file", state="error", expanded=True)
         st.warning(
                 f"Could not parse file. Please check if the file is not corrupted and supported. Reason: {str(e)}",

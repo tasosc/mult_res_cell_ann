@@ -74,7 +74,7 @@ def import_settings(key: str):
         logger.error(
             "While parsing the selection settings, reason: %s",
             e,
-            exc_info=1,
+            exc_info=True,
             stack_info=True,
             stacklevel=2,
         )

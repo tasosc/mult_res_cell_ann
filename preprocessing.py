@@ -222,7 +222,7 @@ class PreProcessing:
         return PreProcessing(adata, config)
 
     @classmethod
-    def build_from_hdf5(cls, path: PathLike, config: Config):
+    def build_from_hdf5(cls, path: str | Path, config: Config):
         """
         Build a class instance from a HDF5 file.
 
