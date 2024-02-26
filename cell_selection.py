@@ -59,6 +59,11 @@ def set_is_selected_value_of(cell: CellType, value: bool):
     st.session_state[cell_all_gene_toggle_key(cell=cell)] = value
 
 
+def on_cell_selection_toggle(cell: CellType):
+    current_value = get_is_selected_value_of(cell)
+    cell.is_selected = current_value
+
+
 def on_cell_select_all(cells: list[CellType], value: bool):
     set_default_all_gene(cells, value)
 
@@ -106,11 +111,12 @@ def cell_selection():
             logger.debug(cell_type.genes)
             # for each cell type create a box
             if cell_type.genes:
-                cell_type.is_selected = st.toggle(
+                st.toggle(
                     f"Select all genes for {cell_type.cell_type}",
-                    value=get_is_selected_value_of(cell_type),
+                    on_change=on_cell_selection_toggle,
+                    key=cell_all_gene_toggle_key(cell_type),
+                    args=[cell_type]
                 )
-                set_is_selected_value_of(cell_type, cell_type.is_selected)
                 cell_type.gene_selection = st.multiselect(
                     "Select specific genes",
                     options=sorted(cell_type.genes),
