@@ -18,15 +18,13 @@ from io import StringIO
 import logging
 from os import PathLike
 from typing import Iterator
-import scanpy as sc
-import anndata
 import warnings
 import gzip
 from pathlib import Path
-
-warnings.filterwarnings("ignore")
+import scanpy as sc
+import anndata
 from utilities import Config, Render
-
+warnings.filterwarnings("ignore")
 
 class PreProcessing:
     """
