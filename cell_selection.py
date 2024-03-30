@@ -48,11 +48,12 @@ def add_gene(cell: CellType):
 def set_default_all_gene(cells: list[CellType], value: bool):
     for cell in cells:
         set_is_selected_value_of(cell, value)
+        cell.is_selected = value
 
 
 def get_is_selected_value_of(cell: CellType) -> bool:
     key = cell_all_gene_toggle_key(cell=cell)
-    return key in st.session_state and st.session_state[key]
+    return st.session_state.get(key, False)
 
 
 def set_is_selected_value_of(cell: CellType, value: bool):
@@ -61,6 +62,7 @@ def set_is_selected_value_of(cell: CellType, value: bool):
 
 def on_cell_selection_toggle(cell: CellType):
     current_value = get_is_selected_value_of(cell)
+    logger.info("Changing selected %s to %s ", cell.cell_type, current_value)
     cell.is_selected = current_value
 
 
@@ -71,6 +73,11 @@ def on_cell_select_all(cells: list[CellType], value: bool):
 def cell_all_gene_toggle_key(cell: CellType):
     return f"all_gene_toggle_{cell.cell_type}"
 
+def cell_gene_selected_key(cell: CellType):
+    return f"cell_select_{cell.cell_type}"
+def on_gene_selection(cell: CellType):
+    key = cell_gene_selected_key(cell)
+    cell.gene_selection = st.session_state.get(key, None)
 
 def cell_selection():
     # Check if we have selected a tissue as we need it
@@ -106,7 +113,7 @@ def cell_selection():
 
     # Render the cell type and their genes in a box for each cell type
     # The columns here is to try to put two cell type boxes in one line
-    for index, cell_type in enumerate(cell_types):
+    for cell_type in cell_types:
         with st.expander(label=cell_type.cell_type):
             logger.debug(cell_type.genes)
             # for each cell type create a box
@@ -121,6 +128,9 @@ def cell_selection():
                     "Select specific genes",
                     options=sorted(cell_type.genes),
                     placeholder=f"select genes for [{cell_type.cell_type}]",
+                    on_change=on_gene_selection,
+                    key=cell_gene_selected_key(cell_type),
+                    args=[cell_type],
                     disabled=get_is_selected_value_of(cell_type),
                 )
             # text box to add new gene symbols. They are separated by space. 
