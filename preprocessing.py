@@ -251,7 +251,7 @@ class PreProcessing:
         if uploaded_file is None:
             config.defaults["data"] = Path(config.defaults["h5ad_path"]).stem
             return cls.build_from_hdf5(path=config.defaults["h5ad_path"], config=config)
-        cls.logger.info(f"filename:{uploaded_file.name} and type {uploaded_file.type}")
+        cls.logger.info("filename: %s and type %s", uploaded_file.name, uploaded_file.type)
         config.defaults["data"] = Path(uploaded_file.name).stem
         if uploaded_file.type != 'application/gzip':
             if uploaded_file.name.endswith(".csv"):
