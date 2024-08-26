@@ -73,3 +73,7 @@ urllib3==2.1.0
 validators==0.22.0
 watchdog==3.0.0
 zipp==3.17.0
+fastapi[standard]~=0.112.1
+python-multipart
+pydantic~=2.5.3
+fastapi_sessions~=0.3.2

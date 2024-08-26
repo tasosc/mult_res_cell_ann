@@ -1,0 +1,30 @@
+{
+    "sqltools.connections": [
+        {
+            "name": "mariadb",
+            "server": "127.0.0.1",
+            "port": 3306,
+            "database": "mastore",
+            "username": "mauser",
+            "password": "123",
+            "dialect": "MySQL",
+            "driver": "MySQL"
+        },
+        {
+            "name": "sqlserver",
+            "server": "127.0.0.1",
+            "port": 1433,
+            "database": "MASTORE",
+            "username": "sa",
+            "password": "sdmxpass1!",
+            "dialect": "MSSQL",
+            "driver": "MSSQL"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "cells",
+            "database": "${workspaceFolder:mult_res_cell_ann}/data/cells.db"
+        }
+    ]
+}
