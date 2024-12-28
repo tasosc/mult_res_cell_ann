@@ -1,10 +1,16 @@
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import List
 from fastapi import FastAPI, UploadFile, Query
+from fastapi.responses import FileResponse
 
 from model.enums import SvdSolverOptions
+from model.session import Cell, SessionData, SessionManager
 from model.settings import Settings
+from preprocessing import PreProcessing
 from store import Store
 from utilities import CellType
+from cell_structure_id import StructureIdentification
 
 app = FastAPI()
 default_settings: Settings = Settings()
@@ -38,10 +44,40 @@ def read_cells(tissue: str, sources: List[str] = Query([])):
     return list(
     CellType.parse_json(store.cell_type_of(tissue, set(sources))))
 
-
-    # TODO upload scRNAseq https://fastapi.tiangolo.com/reference/uploadfile/#fastapi.UploadFile
 @app.post("/session/")
-def analyze_file(file: UploadFile):
-    return {"filename": file.filename}
+def create_session(settings: Settings, cells: list[Cell]):
+    """
+    Create a session and return the session id
+    """
+    return {"session": SessionManager.create_session(cells=cells, settings=settings)}
+
+@app.post("/analyze/{session}")
+async def analyze_file(session: str, file: UploadFile):
+    """
+    analyse uploaded file use
+    """
+    # upload scRNAseq https://fastapi.tiangolo.com/reference/uploadfile/#fastapi.UploadFile
+    session_data : SessionData = SessionManager.get_session(session)
+    session_data.file = file
+    pp = PreProcessing.build_from(file, session_data.settings)
+    pp.qc()
+    pp.normalization()
+    pp.feature_selection()
+    pp.dimensionality_reduction()
+    pp.visualization()
+    si = StructureIdentification(pp.adata, session_data.settings)
+    si.clustering(session_data.cells)
+    si.annotation()
+    with NamedTemporaryFile() as tmp:
+        # Write the annotated dataset to download_file
+        tmp_path = Path(tmp.name)
+        si.write_ann_ds(tmp_path)
+        return FileResponse(tmp_path)
+    # Save to PDF pages (report0
+    # https://stackoverflow.com/questions/11328958/save-multiple-plots-in-a-single-pdf-file
+    # and/or using websockets ? return json with fig & text
+    # https://stackoverflow.com/questions/71936110/correct-way-of-connecting-websocket-events-to-update-my-react-component
+
+    # https://stackoverflow.com/questions/73550398/how-to-download-a-large-file-using-fastapi
 
 # TODO https://fastapi.tiangolo.com/tutorial/static-files/

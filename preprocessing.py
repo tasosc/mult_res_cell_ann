@@ -23,7 +23,8 @@ import gzip
 from pathlib import Path
 import scanpy as sc
 import anndata
-from utilities import Config, Render
+from model.settings import Settings
+from utilities import Render
 warnings.filterwarnings("ignore")
 
 class PreProcessing:
@@ -54,7 +55,7 @@ class PreProcessing:
     """
     logger = logging.getLogger("PreProcessing")
 
-    def __init__(self, adata: anndata.AnnData, config: Config) -> None:
+    def __init__(self, adata: anndata.AnnData, config: Settings) -> None:
         """
         Create a new instance of PreProcessing class
 
@@ -62,7 +63,7 @@ class PreProcessing:
         ----------
         adata : anndata.AnnData
             The single cell RNA sequencing dataset
-        config: Config
+        config: Settings
             Configuration options for various preprocessing commands
         """
         self.config = config
@@ -76,13 +77,13 @@ class PreProcessing:
         # Based on https://github.com/kostaslazaros/cell_annotation_web_app/blob/main/adata_preprocessor.py#L10
         self.render.render_text(self.adata, 3)
         fadata = self.adata
-        n_genes_min = self.config.defaults["n_genes_min"]
-        n_genes_max = self.config.defaults["n_genes_max"]
-        min_genes = self.config.defaults["min_genes"]
-        min_cells = self.config.defaults["min_cells"]
-        n_counts_max = self.config.defaults["n_counts_max"]
-        pc_mito = self.config.defaults["pc_mito"]
-        pc_rib = self.config.defaults["pc_rib"]
+        n_genes_min = self.config.n_genes_min
+        n_genes_max = self.config.n_genes_max
+        min_genes = self.config.min_genes
+        min_cells = self.config.min_cells
+        n_counts_max = self.config.n_counts_max
+        pc_mito = self.config.pc_mito
+        pc_rib = self.config.pc_rib
         # Pre-filtering
         sc.pp.filter_cells(fadata, min_genes=min_genes)  # Equivalent to min.features in Seurat.
         self.render.render_text(f"Filtering cells with number of genes < {min_genes}: {fadata.shape}", 2)
@@ -153,7 +154,7 @@ class PreProcessing:
         """
         Run the dimension reduction step
         """
-        sc.tl.pca(self.adata, svd_solver=self.config.defaults["svd_solver"])
+        sc.tl.pca(self.adata, svd_solver=self.config.svd_solver)
 
     def visualization(self):
         """
@@ -161,14 +162,14 @@ class PreProcessing:
         """
         # Compute distances in the PCA space, and find cell neighbors
         sc.pp.neighbors(
-            self.adata, n_neighbors=self.config.defaults["n_neigh"], n_pcs=self.config.defaults["n_pcs"]
+            self.adata, n_neighbors=self.config.n_neigh, n_pcs=self.config.n_pcs
         )
 
         # Perform leiden clustering
         sc.tl.leiden(
             self.adata,
-            resolution=self.config.defaults["cluster_resolution"],
-            key_added=self.config.defaults["leiden_key"],
+            resolution=self.config.cluster_resolution,
+            key_added=self.config.leiden_key,
         )
 
         # visualization
@@ -177,7 +178,7 @@ class PreProcessing:
         self.render.render_fig(sc.pl.umap(
             self.adata,
             color="leiden",
-            title=f'Leiden clustering (Resolution: {self.config.defaults["cluster_resolution"]})',
+            title=f'Leiden clustering (Resolution: {self.config.cluster_resolution})',
             frameon=True,
             legend_fontweight="normal",
             legend_fontsize=10,
@@ -185,7 +186,7 @@ class PreProcessing:
         ), 1)
 
     @classmethod
-    def build_from_txt(cls, path: PathLike | Iterator[str], config: Config):
+    def build_from_txt(cls, path: PathLike | Iterator[str], config: Settings):
         """
         Build a class instance from a txt  file.
 
@@ -195,14 +196,14 @@ class PreProcessing:
         ----------
         path : PathLike|Iterator[str]
             The single cell RNA sequencing dataset as a file or something read-able
-        config: Config
+        config: Settings
             Configuration options for various preprocessing commands
         """
         adata = sc.read_text(path, first_column_names=True).T
         return PreProcessing(adata, config)
 
     @classmethod
-    def build_from_csv(cls, path: PathLike | Iterator[str], config: Config):
+    def build_from_csv(cls, path: PathLike | Iterator[str], config: Settings):
         """
         Build a class instance from a csv file.
 
@@ -212,15 +213,15 @@ class PreProcessing:
         ----------
         path : PathLike|Iterator[str]
             The single cell RNA sequencing dataset as a file or something read-able
-        config: Config
+        config: Settings
             Configuration options for various preprocessing commands
         """
-        delimiter = '\t' if config.defaults["csv_delimiter"] == 'T' else config.defaults["csv_delimiter"]
+        delimiter = '\t' if config.csv_delimiter == 'T' else config.csv_delimiter
         adata = sc.read_csv(path, delimiter=delimiter, first_column_names=True).T
         return PreProcessing(adata, config)
 
     @classmethod
-    def build_from_hdf5(cls, path: str | Path, config: Config):
+    def build_from_hdf5(cls, path: str | Path, config: Settings):
         """
         Build a class instance from a HDF5 file.
 
@@ -228,14 +229,14 @@ class PreProcessing:
         ----------
         path : PathLike|Iterator[str]
             The single cell RNA sequencing dataset as a file or something read-able
-        config: Config
+        config: Settings
             Configuration options for various preprocessing commands
         """
         adata = sc.read_h5ad(path)
         return PreProcessing(adata=adata, config=config)
 
     @classmethod
-    def build_from(cls, uploaded_file, config: Config):
+    def build_from(cls, uploaded_file, config: Settings):
         """
          Build a class instance from a HDF5 or CSV (gzip'ed or not) file.
 
@@ -243,16 +244,16 @@ class PreProcessing:
         ----------
         uploaded_file : PathLike|Iterator[str] with .name and .type fields
             The single cell RNA sequencing dataset as a file or something read-able
-        config: Config
+        config: Settings
             Configuration options for various preprocessing commands
         """
         if config is None:
             raise ValueError("Internal error, configuration not found")
         if uploaded_file is None:
-            config.defaults["data"] = Path(config.defaults["h5ad_path"]).stem
-            return cls.build_from_hdf5(path=config.defaults["h5ad_path"], config=config)
+            config.data = Path(config.h5ad_path).stem
+            return cls.build_from_hdf5(path=config.h5ad_path, config=config)
         cls.logger.info("filename: %s and type %s", uploaded_file.name, uploaded_file.type)
-        config.defaults["data"] = Path(uploaded_file.name).stem
+        config.data = Path(uploaded_file.name).stem
         if uploaded_file.type != 'application/gzip':
             if uploaded_file.name.endswith(".csv"):
                 with StringIO(uploaded_file.getvalue().decode("utf-8")) as csv:

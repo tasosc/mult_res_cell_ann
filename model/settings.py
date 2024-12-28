@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from model.enums import SvdSolverOptions
+from model.enums import ReportingOptions, SvdSolverOptions
 
 
 class Settings(BaseModel):
@@ -20,4 +20,5 @@ class Settings(BaseModel):
     normalize_total_counts: bool = False
     only_highly_significant_genes: bool = False
     verbosity: int = 1
+    output: ReportingOptions = ReportingOptions.as_progress | ReportingOptions.pdf
 # TODO init from Configuration

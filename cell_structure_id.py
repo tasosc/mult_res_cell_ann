@@ -24,6 +24,7 @@ import decoupler as dc
 import anndata
 import matplotlib.pyplot as plt
 import seaborn as sns
+from model.settings import Settings
 import warnings
 
 from utilities import CellType, Config, Render
@@ -57,7 +58,7 @@ class StructureIdentification:
 
     """
 
-    def __init__(self, adata: anndata.AnnData, config: Config) -> None:
+    def __init__(self, adata: anndata.AnnData, config: Settings) -> None:
         """
         Create a new instance of StructureIdentification class
 
@@ -102,7 +103,7 @@ class StructureIdentification:
             target="Symbol",
             min_n=3,
             verbose=True,
-            use_raw=self.config.get_bool("only_highly_significant_genes"),
+            use_raw=self.config.only_highly_significant_genes
         )
         # The obtained scores (-log10(p-value))(ora_estimate) and p-values (ora_pvals) are stored in the .obsm key
         self.render.render_text(
@@ -210,7 +211,7 @@ class StructureIdentification:
         """
         self.adata.write_h5ad(output, compression=hdf5plugin.FILTERS["zstd"])
 
-    def cluster_vln_plot(self, melted_df):
+    def cluster_vln_plot(self, melted_df, title: str | None):
         """
         Plot violin plot for clusters in provided `melted_df`
 
@@ -260,7 +261,7 @@ class StructureIdentification:
         plt.gca().set_facecolor("whitesmoke")
 
         plt.title(
-            f'Violin plots of cell-type ORA scores across leiden clusters (Data: {self.config.defaults["data"]}, Leiden_res = {self.config.defaults["cluster_resolution"]})'
+            f'Violin plots of cell-type ORA scores across leiden clusters (Data: {title}, Leiden_res = {self.config.cluster_resolution})'
         )
         plt.ylabel("ORA score")
         plt.xlabel("Leiden cluster")

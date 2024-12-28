@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import IntFlag, StrEnum, auto
 
 
 class SvdSolverOptions(StrEnum):
@@ -10,3 +10,8 @@ class SvdSolverOptions(StrEnum):
     @classmethod
     def values(cls):
         return [c.value for c in cls]
+
+class ReportingOptions(IntFlag):
+    as_progress = auto()
+    pdf = auto()
+
