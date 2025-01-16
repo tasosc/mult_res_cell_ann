@@ -1,8 +1,9 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List
+from typing import Annotated, List
 from fastapi import FastAPI, UploadFile, Query
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from model.enums import SvdSolverOptions
 from model.session import Cell, SessionData, SessionManager
@@ -15,6 +16,18 @@ from cell_structure_id import StructureIdentification
 app = FastAPI()
 default_settings: Settings = Settings()
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:5173"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/metadata/settings/defaults")
 def read_default_settings():
@@ -44,7 +57,7 @@ def read_cells(tissue: str, sources: List[str] = Query([])):
     return list(
     CellType.parse_json(store.cell_type_of(tissue, set(sources))))
 
-@app.post("/session/")
+@app.post("/session")
 def create_session(settings: Settings, cells: list[Cell]):
     """
     Create a session and return the session id
