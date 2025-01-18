@@ -69,19 +69,31 @@ async def analyze_file(session: str, file: UploadFile):
     """
     analyse uploaded file use
     """
+
     # upload scRNAseq https://fastapi.tiangolo.com/reference/uploadfile/#fastapi.UploadFile
     session_data : SessionData = SessionManager.get_session(session)
     session_data.file = file
+    def render_fig(fig, expected_verbosity=1):
+        if session_data.settings.verbosity < expected_verbosity:
+            return
+
+    def render_text(something, expected_verbosity=1):
+        if session_data.settings.verbosity < expected_verbosity:
+            return
     pp = PreProcessing.build_from(file, session_data.settings)
+    pp.render.set_render_fig_lambda(render_fig)
+    pp.render.set_render_text_lambda(render_text)
     pp.qc()
     pp.normalization()
     pp.feature_selection()
     pp.dimensionality_reduction()
     pp.visualization()
     si = StructureIdentification(pp.adata, session_data.settings)
+    si.render.set_render_fig_lambda(render_fig)
+    si.render.set_render_text_lambda(render_text)
     si.clustering(session_data.cells)
     si.annotation()
-    with NamedTemporaryFile() as tmp:
+    with NamedTemporaryFile(delete=False) as tmp:
         # Write the annotated dataset to download_file
         tmp_path = Path(tmp.name)
         si.write_ann_ds(tmp_path)

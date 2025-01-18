@@ -1,5 +1,6 @@
 """ Session model """
 import uuid
+import pandas as pd
 from pydantic import BaseModel
 from fastapi import  UploadFile
 
@@ -10,6 +11,14 @@ class Cell(BaseModel):
     """model for a selected cell with the selected genes"""
     cell_type: str
     genes: list[str]
+    def get_selected(self) -> pd.DataFrame:
+        selection = set(self.genes)
+        if len(selection) == 0:
+            return pd.DataFrame({"cell_name": [], "Symbol": []})
+        selection.discard(None)
+        df = pd.DataFrame(data=selection, columns=["Symbol"])
+        df.insert(0, "cell_name", self.cell_type)
+        return df
 
 class SessionData(BaseModel):
     """ Model for session """
@@ -34,16 +43,16 @@ class SessionManager:
         SessionManager.sessions[session_id.hex]=data
         return session_id.hex
     
-    @classmethod
-    def get_session(cls, sessiod_id: str) -> SessionData:
+    @staticmethod
+    def get_session(sessiod_id: str) -> SessionData:
         """
         Get session withh the specified uuid
         """
-        return cls.sessions[sessiod_id] if sessiod_id in cls.sessions else None
+        return SessionManager.sessions[sessiod_id] if sessiod_id in SessionManager.sessions else None
     
-    @classmethod
-    def delete_session(cls, session_id: str) -> None:
+    @staticmethod
+    def delete_session(session_id: str) -> None:
         """
         Delete session
         """
-        del cls.sessions[session_id]
+        del SessionManager.sessions[session_id]

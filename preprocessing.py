@@ -127,9 +127,9 @@ class PreProcessing:
 
     def feature_selection(self) -> None:
         """
-        Run the feature selection step, only if `config.get_bool("only_highly_significant_genes")` returns true
+        Run the feature selection step, only if `config.only_highly_significant_genes` returns true
         """
-        if self.config.get_bool("only_highly_significant_genes"):
+        if self.config.only_highly_significant_genes:
             self.render.render_text("Identify the most highly variable genes")
             # Identify the most highly variable genes
             sc.pp.highly_variable_genes(self.adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
@@ -146,7 +146,7 @@ class PreProcessing:
         Run the normalization step
         """
         # normalization
-        if self.config.get_bool("normalize_total_counts"):
+        if self.config.normalize_total_counts:
             sc.pp.normalize_total(self.adata, target_sum=1e4)
         sc.pp.log1p(self.adata)
 
@@ -250,21 +250,19 @@ class PreProcessing:
         if config is None:
             raise ValueError("Internal error, configuration not found")
         if uploaded_file is None:
-            config.data = Path(config.h5ad_path).stem
             return cls.build_from_hdf5(path=config.h5ad_path, config=config)
-        cls.logger.info("filename: %s and type %s", uploaded_file.name, uploaded_file.type)
-        config.data = Path(uploaded_file.name).stem
-        if uploaded_file.type != 'application/gzip':
-            if uploaded_file.name.endswith(".csv"):
+        cls.logger.info("filename: %s and type %s", uploaded_file.filename, uploaded_file.content_type)
+        if uploaded_file.content_type != 'application/gzip':
+            if uploaded_file.filename.endswith(".csv"):
                 with StringIO(uploaded_file.getvalue().decode("utf-8")) as csv:
                     return cls.build_from_csv(path=csv, config=config)
-            if uploaded_file.name.endswith(".txt"):
+            if uploaded_file.filename.endswith(".txt"):
                 with StringIO(uploaded_file.getvalue().decode("utf-8")) as txt:
                     return cls.build_from_txt(path=txt, config=config)
 
-            return cls.build_from_hdf5(path=uploaded_file, config=config)
+            return cls.build_from_hdf5(path=uploaded_file.file, config=config)
 
         with gzip.open(uploaded_file, mode='rt') as gcsv:
-            if uploaded_file.name.endswith(".txt.gz"):
+            if uploaded_file.filename.endswith(".txt.gz"):
                 return cls.build_from_txt(path=gcsv, config=config)
             return cls.build_from_csv(path=gcsv, config=config)

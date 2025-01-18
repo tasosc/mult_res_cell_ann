@@ -24,10 +24,11 @@ import decoupler as dc
 import anndata
 import matplotlib.pyplot as plt
 import seaborn as sns
+from model.session import Cell
 from model.settings import Settings
 import warnings
 
-from utilities import CellType, Config, Render
+from utilities import Render
 
 warnings.filterwarnings("ignore")
 logger = logging.getLogger("Store")
@@ -74,14 +75,14 @@ class StructureIdentification:
         self.render = Render()
         self.acts = None
 
-    def clustering(self, cell_types: list[CellType]):
+    def clustering(self, cell_types: list[Cell]):
         """
         Perform clustering
 
         Parameters
         ----------
-        cell_types: list[CellType]
-               The list of cell types to use an input in ORA after they are filtered. Only CellType with selected genes, new genes or all selected genes will be used.
+        cell_types: list[Cell]
+               The list of cell types to use an input in ORA after they are filtered. Only Cell with selected genes, new genes or all selected genes will be used.
         """
         # Filter cell marker dataframe to obtain markers related to give cell types
         self.render.render_text(
@@ -128,7 +129,7 @@ class StructureIdentification:
         self.render.render_text(
             "Create ORA-score violin plots for all leiden clusters and cell-types", 2
         )
-        self.render.render_fig(self.cluster_vln_plot(melted_df))
+        self.render.render_fig(self.cluster_vln_plot(melted_df=melted_df, title="ORA-score violin plot"))
 
     @staticmethod
     def __create_melted_df(score_df, ctype_lst):
@@ -272,5 +273,5 @@ class StructureIdentification:
         return plt
 
     @staticmethod
-    def filtered_marker(cell_types: list[CellType]) -> pd.DataFrame:
+    def filtered_marker(cell_types: list[Cell]) -> pd.DataFrame:
         return pd.concat([c.get_selected() for c in cell_types], ignore_index=True)
