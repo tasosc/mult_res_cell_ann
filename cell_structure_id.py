@@ -130,7 +130,7 @@ class StructureIdentification:
         self.render.render_text(
             "Create ORA-score violin plots for all leiden clusters and cell-types", 2
         )
-        self.render.render_fig(self.cluster_vln_plot(melted_df=melted_df, title="ORA-score violin plot"))
+        return self.cluster_vln_plot(melted_df=melted_df, title="ORA-score violin plot")
 
     @staticmethod
     def __create_melted_df(score_df, ctype_lst):
@@ -205,7 +205,7 @@ class StructureIdentification:
             legend_fontsize=10,
             return_fig=True,
         )
-        self.render.render_fig(umap_plot, 1)
+        return umap_plot
 
     def write_ann_ds(self, output: PathLike):
         """

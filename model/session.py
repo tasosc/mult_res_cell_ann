@@ -1,4 +1,5 @@
 """ Session model """
+import dataclasses
 from pathlib import Path
 from typing import Optional
 import uuid
@@ -6,6 +7,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from model.settings import Settings
+from utils.feedback_socket import FeedbackModel
 
 
 class Cell(BaseModel):
@@ -21,14 +23,16 @@ class Cell(BaseModel):
         df.insert(0, "cell_name", self.cell_type)
         return df
 
-class SessionData(BaseModel):
+@dataclasses.dataclass
+class SessionData:
     """ Model for session """
-    file: Optional[Path] = None
     uuid: uuid.UUID
     cells: list[Cell]
     settings: Settings
+    file: Optional[Path] = None
     annotated: Optional[Path] = None
     download_filename: Optional[str] = None
+    message_queue: list[FeedbackModel] = dataclasses.field(default_factory=list)
     
 
 class SessionManager:

@@ -1,10 +1,10 @@
 [project]
 name = "mult_res_cell_ann"
 version = "2.0.0"
-requires-python = ">=3.12.0"
+requires-python = ">=3.13.0"
 dependencies = [
 	"pandas",
-	"scanpy",
+	"scanpy[leiden]",
 	"decoupler",
 	"hdf5plugin",
 	"matplotlib",
@@ -13,5 +13,9 @@ dependencies = [
 	"fastapi[standard]",
 	"python-multipart",
 	"pydantic",
-	"fastapi_sessions"
+	"fastapi_sessions",
+	"llvmlite >= 0.44.0",
 ]
+
+[tool.uv.sources]
+decoupler = { path = "../decoupler-py/dist/decoupler-1.8.1-py3-none-any.whl" }

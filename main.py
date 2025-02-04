@@ -2,7 +2,6 @@
 REST API Controller for multiple resource cell annotation
 """
 import datetime
-import io
 from pathlib import Path
 import shutil
 from tempfile import NamedTemporaryFile
@@ -10,16 +9,14 @@ from typing import List
 from fastapi import FastAPI, UploadFile, Query, WebSocket, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from matplotlib.figure import Figure
 
 from model.enums import Activity, SvdSolverOptions
 from model.session import Cell, SessionData, SessionManager
 from model.settings import Settings
-from preprocessing import PreProcessing
+from worfklow import run
 from store import Store
 from utilities import CellType
-from cell_structure_id import StructureIdentification
-from utils.feedback_socket import FeedbackSocket
+from utils.feedback_socket import FeedbackModel, FeedbackSocket
 
 app = FastAPI()
 default_settings: Settings = Settings()
@@ -115,55 +112,21 @@ async def get_feedback(socket: WebSocket, session : str):
     if not session_data:
         raise HTTPException(status_code=404, detail="Session not found")
     await socket.accept()
-    await run_analysis(session_data=session_data, socket=socket)
+    await monitor_analysis(session_data=session_data, socket=socket)
     await socket.close()
 
 
-async def run_analysis(session_data: SessionData, socket: WebSocket):
+async def monitor_analysis(session_data: SessionData, socket: WebSocket):
     feedback = FeedbackSocket(socket)
-    async def render_fig(fig: Figure, expected_verbosity=1):
+
+    async def render_text(something: str, expected_verbosity=1):
         if session_data.settings.verbosity < expected_verbosity:
             return
-        with io.BytesIO() as buf:
-            fig.savefig(buf, format='png')
-            buf.seek(0)
-            await socket.send_bytes(buf)
+        await feedback.send(FeedbackModel(activity=Activity.NONE, message=something))
 
-    async def render_text(something: str, current_activity: Activity = Activity.NONE, expected_verbosity=1):
-        if session_data.settings.verbosity < expected_verbosity:
-            return
-        await feedback.completed(current_activity=current_activity, message=something)
+    for model in run(session_data=session_data, render_text=render_text):
+        await feedback.send(model)
 
-    pp = PreProcessing.build_from(session_data.file, session_data.settings)
-    pp.render.set_render_fig_lambda(render_fig)
-    pp.render.set_render_text_lambda(render_text)
-    feedback.start()
-    pp.qc()
-    await feedback.completed(Activity.PP_QC)
-    pp.normalization()
-    await feedback.completed(Activity.PP_NORM)
-    pp.feature_selection()
-    await feedback.completed(Activity.PP_FEATURE)
-    pp.dimensionality_reduction()
-    await feedback.completed(Activity.PP_REDUCTION)
-    pp.visualization()
-    await feedback.completed(Activity.PP_VISUALIAZTION)
-    si = StructureIdentification(pp.adata, session_data.settings)
-    si.render.set_render_fig_lambda(render_fig)
-    si.render.set_render_text_lambda(render_text)
-    si.clustering(session_data.cells)
-    await feedback.completed(Activity.SI_CLUSTERING)
-    si.annotation()
-    await feedback.completed(Activity.SI_ANNOTATION)
-    with NamedTemporaryFile(delete=False) as tmp:
-        # Write the annotated dataset to download_file
-        tmp_path = Path(tmp.name)
-        si.write_ann_ds(tmp_path)
-        session_data.annotated = tmp_path
-        filename = session_data.file.filename if session_data.file is not None and session_data.file.filename is not None else "annotated"
-        filename = filename + ".h5ad"
-        session_data.download_filename = filename
-        await feedback.completed(current_activity= Activity.SI_FILE, link=f"/{SessionManager.get_session_id(session_data)}/{filename}")
         # Save to PDF pages (report0
     # https://stackoverflow.com/questions/11328958/save-multiple-plots-in-a-single-pdf-file
     # and/or using websockets ? return json with fig & text

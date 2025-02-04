@@ -175,7 +175,7 @@ class PreProcessing:
         # visualization
         # Calculate UMAP embeddings
         sc.tl.umap(self.adata)
-        self.render.render_fig(sc.pl.umap(
+        return sc.pl.umap(
             self.adata,
             color="leiden",
             title=f'Leiden clustering (Resolution: {self.config.cluster_resolution})',
@@ -183,7 +183,7 @@ class PreProcessing:
             legend_fontweight="normal",
             legend_fontsize=10,
             return_fig=True,
-        ), 1)
+        )
 
     @classmethod
     def build_from_txt(cls, path: PathLike | Iterator[str], config: Settings):
