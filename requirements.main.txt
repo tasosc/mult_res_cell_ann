@@ -1,0 +1,11 @@
+pandas
+scanpy
+decoupler
+hdf5plugin
+matplotlib
+seaborn
+leidenalg
+fastapi[standard]
+python-multipart
+pydantic
+fastapi_sessions

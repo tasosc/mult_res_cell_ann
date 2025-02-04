@@ -17,6 +17,8 @@
 #
 import base64
 import re
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import pandas as pd
 import json
 import logging
@@ -173,7 +175,7 @@ class Render:
         """
         self.render_text_lambda = render_lambda
 
-    def render_fig(self, fig, expected_verbosity=1):
+    def render_fig(self, fig: Figure | Axes | list[Axes] | None, expected_verbosity=1) -> Figure | None:
         """
         Render the provided figure if the expected verbosity is equal or less than the configured verbosity
 

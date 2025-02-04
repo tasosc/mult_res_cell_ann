@@ -1,8 +1,9 @@
 """ Session model """
+from pathlib import Path
+from typing import Optional
 import uuid
 import pandas as pd
 from pydantic import BaseModel
-from fastapi import  UploadFile
 
 from model.settings import Settings
 
@@ -22,10 +23,13 @@ class Cell(BaseModel):
 
 class SessionData(BaseModel):
     """ Model for session """
-    file: UploadFile = None
+    file: Optional[Path] = None
     uuid: uuid.UUID
     cells: list[Cell]
     settings: Settings
+    annotated: Optional[Path] = None
+    download_filename: Optional[str] = None
+    
 
 class SessionManager:
     """
@@ -56,3 +60,8 @@ class SessionManager:
         Delete session
         """
         del SessionManager.sessions[session_id]
+    @staticmethod
+    def get_session_id(session: SessionData) -> Optional[str]:
+        if session is None:
+            return None
+        return session.uuid.hex

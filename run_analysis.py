@@ -19,17 +19,14 @@ import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import streamlit as st
-
 from cell_structure_id import StructureIdentification
+from model.settings import Settings
 from preprocessing import PreProcessing
-from utilities import Config
 
 logger = logging.getLogger("run_analysis")
 
 
-def run_analysis(config: Config, uploaded_file, tissue_type: str, status):
-    st.write("Scroll down to view more results")
+def run_analysis(config: Settings, uploaded_file : Path, tissue_type: str, status):
     verbosity = config.defaults["verbosity"]
 
     def render_fig(fig, expected_verbosity=1):

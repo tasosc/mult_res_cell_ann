@@ -16,6 +16,7 @@
 #
 import logging
 from os import PathLike
+from matplotlib.figure import Figure
 import scanpy as sc
 import hdf5plugin
 import numpy as np
@@ -212,7 +213,7 @@ class StructureIdentification:
         """
         self.adata.write_h5ad(output, compression=hdf5plugin.FILTERS["zstd"])
 
-    def cluster_vln_plot(self, melted_df, title: str | None):
+    def cluster_vln_plot(self, melted_df, title: str | None) -> Figure|None:
         """
         Plot violin plot for clusters in provided `melted_df`
 
@@ -270,7 +271,7 @@ class StructureIdentification:
         plt.legend(title="Cell Type", bbox_to_anchor=(1.01, 1), loc="upper left")
 
         plt.tight_layout()
-        return plt
+        return plt.gcf()
 
     @staticmethod
     def filtered_marker(cell_types: list[Cell]) -> pd.DataFrame:

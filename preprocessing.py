@@ -154,7 +154,7 @@ class PreProcessing:
         """
         Run the dimension reduction step
         """
-        sc.tl.pca(self.adata, svd_solver=self.config.svd_solver)
+        sc.tl.pca(self.adata, svd_solver=self.config.svd_solver.name)
 
     def visualization(self):
         """
@@ -236,7 +236,7 @@ class PreProcessing:
         return PreProcessing(adata=adata, config=config)
 
     @classmethod
-    def build_from(cls, uploaded_file, config: Settings):
+    def build_from(cls, uploaded_file: Path, config: Settings):
         """
          Build a class instance from a HDF5 or CSV (gzip'ed or not) file.
 
@@ -250,19 +250,19 @@ class PreProcessing:
         if config is None:
             raise ValueError("Internal error, configuration not found")
         if uploaded_file is None:
-            return cls.build_from_hdf5(path=config.h5ad_path, config=config)
-        cls.logger.info("filename: %s and type %s", uploaded_file.filename, uploaded_file.content_type)
-        if uploaded_file.content_type != 'application/gzip':
-            if uploaded_file.filename.endswith(".csv"):
-                with StringIO(uploaded_file.getvalue().decode("utf-8")) as csv:
-                    return cls.build_from_csv(path=csv, config=config)
-            if uploaded_file.filename.endswith(".txt"):
-                with StringIO(uploaded_file.getvalue().decode("utf-8")) as txt:
-                    return cls.build_from_txt(path=txt, config=config)
-
-            return cls.build_from_hdf5(path=uploaded_file.file, config=config)
-
-        with gzip.open(uploaded_file, mode='rt') as gcsv:
-            if uploaded_file.filename.endswith(".txt.gz"):
+            return cls.build_from_hdf5(path="./data/GSM4089151_P1.h5ad", config=config)
+        extension= "".join(uploaded_file.suffixes) if uploaded_file.suffix == ".gz" else uploaded_file.suffix
+        cls.logger.info("filename: %s and type %s", uploaded_file.name, extension)
+        if extension == '.csv':
+            with StringIO(uploaded_file.getvalue().decode("utf-8")) as csv:
+                return cls.build_from_csv(path=csv, config=config)
+        if extension == '.txt':
+            with StringIO(uploaded_file.getvalue().decode("utf-8")) as txt:
+                return cls.build_from_txt(path=txt, config=config)
+        if extension == '.csv.gz':
+            with gzip.open(uploaded_file, mode='rt') as gcsv:
+                return cls.build_from_csv(path=gcsv, config=config)
+        if extension == '.txt.gz':
+            with gzip.open(uploaded_file, mode='rt') as gcsv:
                 return cls.build_from_txt(path=gcsv, config=config)
-            return cls.build_from_csv(path=gcsv, config=config)
+        return cls.build_from_hdf5(path=uploaded_file, config=config)

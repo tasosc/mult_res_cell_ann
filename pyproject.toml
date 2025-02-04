@@ -1,0 +1,17 @@
+[project]
+name = "mult_res_cell_ann"
+version = "2.0.0"
+requires-python = ">=3.12.0"
+dependencies = [
+	"pandas",
+	"scanpy",
+	"decoupler",
+	"hdf5plugin",
+	"matplotlib",
+	"seaborn",
+	"leidenalg",
+	"fastapi[standard]",
+	"python-multipart",
+	"pydantic",
+	"fastapi_sessions"
+]
