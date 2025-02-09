@@ -1,13 +1,13 @@
 """ Session model """
 import dataclasses
 from pathlib import Path
+from queue import Queue
 from typing import Optional
 import uuid
 import pandas as pd
 from pydantic import BaseModel
 
 from model.settings import Settings
-from utils.feedback_socket import FeedbackModel
 
 
 class Cell(BaseModel):
@@ -29,11 +29,13 @@ class SessionData:
     uuid: uuid.UUID
     cells: list[Cell]
     settings: Settings
+    message_queue: Queue
     file: Optional[Path] = None
     annotated: Optional[Path] = None
     download_filename: Optional[str] = None
-    message_queue: list[FeedbackModel] = dataclasses.field(default_factory=list)
-    
+    has_finished: bool = False
+    has_started: bool = False
+
 
 class SessionManager:
     """
@@ -47,7 +49,7 @@ class SessionManager:
         Create a new session
         """
         session_id= uuid.uuid4()
-        data : SessionData = SessionData(uuid=session_id, cells=cells, settings=settings)
+        data : SessionData = SessionData(uuid=session_id, cells=cells, settings=settings, message_queue=Queue())
         SessionManager.sessions[session_id.hex]=data
         return session_id.hex
     

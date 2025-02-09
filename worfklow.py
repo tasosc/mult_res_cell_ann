@@ -18,45 +18,51 @@
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable
 
 from cell_structure_id import StructureIdentification
 from model.enums import Activity
 from model.session import SessionData, SessionManager
 from preprocessing import PreProcessing
-from utils.feedback_socket import FeedbackModel
+from utils.feedback_socket import FeedbackModel, FeedbackQueue
 
-logger = logging.getLogger("workflow")
+logger = logging.getLogger("uvicorn.error")
 
 
-def run(session_data : SessionData, render_text: Callable[[str, int], None]):
+def run(session_data : SessionData):
+    logger.info("Started analysis for session %s", session_data.uuid.hex)
+    feedback_queue = FeedbackQueue(session_data.message_queue)
+    def render_text(something: str, expected_verbosity=1):
+        if session_data.settings.verbosity < expected_verbosity:
+            return
+        feedback_queue.put(FeedbackModel(activity=Activity.NONE, message=something))
+
     verbosity = session_data.settings.verbosity
     pp = PreProcessing.build_from(session_data.file, session_data.settings)
     pp.render.set_render_text_lambda(render_text)
-    yield FeedbackModel(activity=Activity.PARSE_DATASET)
+    feedback_queue.put(FeedbackModel(activity=Activity.PARSE_DATASET))
  
     pp.qc()
-    yield FeedbackModel(activity=Activity.PP_QC)
+    feedback_queue.put(FeedbackModel(activity=Activity.PP_QC))
     pp.normalization()
-    yield FeedbackModel(activity=Activity.PP_NORM)
+    feedback_queue.put(FeedbackModel(activity=Activity.PP_NORM))
     pp.feature_selection()
-    yield FeedbackModel(activity=Activity.PP_FEATURE)
+    feedback_queue.put(FeedbackModel(activity=Activity.PP_FEATURE))
     pp.dimensionality_reduction()
-    yield FeedbackModel(activity=Activity.PP_REDUCTION)
+    feedback_queue.put(FeedbackModel(activity=Activity.PP_REDUCTION))
     fig = pp.visualization()
     if (verbosity >= 1):
-        yield FeedbackModel(activity=Activity.NONE, image=fig)
-    yield FeedbackModel(activity=Activity.PP_VISUALIAZTION)
+        feedback_queue.put(FeedbackModel(activity=Activity.NONE, image=fig))
+    feedback_queue.put(FeedbackModel(activity=Activity.PP_VISUALIAZTION))
     si = StructureIdentification(pp.adata, session_data.settings)
     si.render.set_render_text_lambda(render_text)
     fig2=si.clustering(session_data.cells)
     if (verbosity >= 1):
-        yield FeedbackModel(activity=Activity.NONE, image=fig2)
-    yield FeedbackModel(activity=Activity.SI_CLUSTERING)
+        feedback_queue.put(FeedbackModel(activity=Activity.NONE, image=fig2))
+    feedback_queue.put(FeedbackModel(activity=Activity.SI_CLUSTERING))
     fig3=si.annotation()
     if (verbosity >= 1):
-        yield FeedbackModel(activity=Activity.NONE, image=fig3)
-    yield FeedbackModel(activity=Activity.SI_ANNOTATION)
+        feedback_queue.put(FeedbackModel(activity=Activity.NONE, image=fig3))
+    feedback_queue.put(FeedbackModel(activity=Activity.SI_ANNOTATION))
     with NamedTemporaryFile(delete=False) as tmp:
         # Write the annotated dataset to download_file
         tmp_path = Path(tmp.name)
@@ -65,4 +71,6 @@ def run(session_data : SessionData, render_text: Callable[[str, int], None]):
         filename = session_data.file.name if session_data.file is not None and session_data.file.name is not None else "annotated"
         filename = filename + ".h5ad"
         session_data.download_filename = filename
-        yield FeedbackModel(activity=Activity.SI_FILE, link=f"/{SessionManager.get_session_id(session_data)}/{filename}")
+        feedback_queue.put(FeedbackModel(activity=Activity.SI_FILE, link=f"/{SessionManager.get_session_id(session_data)}/{filename}"))
+    feedback_queue.put(FeedbackModel(activity=Activity.END))
+    

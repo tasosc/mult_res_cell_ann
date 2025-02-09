@@ -16,11 +16,16 @@
 """
 Send feedback via websockets
 """
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import dataclasses
 from datetime import datetime, timedelta
 import io
 import logging
 from pathlib import Path
-from typing import Callable, Optional
+from queue import Queue
+from typing import Optional
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketState
 from matplotlib.figure import Figure
@@ -29,30 +34,23 @@ from model.enums import Activity
 
 logger = logging.getLogger("workflow")
 
-# @dataclasses.dataclass
+@dataclasses.dataclass
 class FeedbackModel:
     """Model for sending feedback from workflow to the FeedbackSocket """ 
-    def __init__(
-        self,
-        activity: Activity,
-        message: Optional[str] = None,
-        link: Optional[str] = None,
-        image: Optional[Figure] = None,
-        output_path: Optional[Path] = None,
-    ):
-        self.activity: Activity = activity
-        self.message: Optional[str] = message
-        self.link: Optional[str] = link
-        self.image: Optional[Figure] = image
-        self.output_path: Optional[Path] = output_path
-        self.end = datetime.now()
-        self.duration = timedelta(seconds=0)
+    activity: Activity
+    message: Optional[str] = None
+    link: Optional[str] = None
+    image: Optional[Figure] = None
+    output_path: Optional[Path] = None
+    end : datetime = dataclasses.field(default_factory=datetime.now)
+    duration: float = -1
 
-    def stop_watch(self, command: Callable[[], None]):
-        start = datetime.now()
-        command()
-        self.end = datetime.now()
-        self.duration = self.end - start
+    def set_duration(self, start: datetime):
+        if (start > self.end):
+            logger.error("Start '%s' is after end '%s'", start, self.end)
+        duration : timedelta = self.end - start
+        self.duration = duration.total_seconds()
+
 
 class FeedbackSocket:
     """
@@ -60,7 +58,6 @@ class FeedbackSocket:
     """
     def __init__(self, socket: WebSocket):
         self.socket = socket
-        self.start_time = datetime.now()
 
     async def send(self, feedback: FeedbackModel):
         """
@@ -78,11 +75,28 @@ class FeedbackSocket:
                 await self.socket.send_bytes(buf)
                 return
 
-        end_time = datetime.now()
-        duration : timedelta = end_time - self.start_time
         await self.socket.send_json({'activity': feedback.activity,
-                                    'finished': end_time.isoformat(sep='T'),
-                                    'duration': duration.total_seconds(), 
+                                    'finished': feedback.end.isoformat(sep='T'),
+                                    'duration': feedback.duration, 
                                     'message': feedback.message,
                                     'link': feedback.link})
+class FeedbackQueue:
+    """
+    A stopwatch that sends a message to a socket at the end
+    """
+    def __init__(self, queue: Queue):
+        self.queue = queue
+        self.start_time = datetime.now()
+
+    def put(self, feedback: FeedbackModel):
+        """
+        Specify that the current activity has completed
+        """
+        # Simple message no duration
+        if (feedback.activity == Activity.NONE):
+            self.queue.put(feedback)
+            return
+
+        feedback.set_duration(self.start_time)
+        self.queue.put(feedback)
         self.start_time = datetime.now()

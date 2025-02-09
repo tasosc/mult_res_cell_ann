@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+import matplotlib
+matplotlib.use('Agg')
 from io import StringIO
 import logging
 from os import PathLike

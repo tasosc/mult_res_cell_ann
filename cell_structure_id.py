@@ -16,6 +16,8 @@
 #
 import logging
 from os import PathLike
+import matplotlib
+matplotlib.use('AGG')
 from matplotlib.figure import Figure
 import scanpy as sc
 import hdf5plugin
