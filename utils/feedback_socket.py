@@ -74,11 +74,11 @@ class FeedbackSocket:
                 buf.seek(0)
                 await self.socket.send_bytes(buf)
                 return
-
+        
         await self.socket.send_json({'activity': feedback.activity,
                                     'finished': feedback.end.isoformat(sep='T'),
                                     'duration': feedback.duration, 
-                                    'message': feedback.message,
+                                    'message': str(feedback.message),
                                     'link': feedback.link})
 class FeedbackQueue:
     """
