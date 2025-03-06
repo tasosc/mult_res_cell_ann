@@ -1,3 +1,19 @@
+#
+# This file is part of the mult_res_cell_ann distribution (https://github.com/tasosc/mult_res_cell_ann).
+# Copyright (c) 2024 Anastasios Chronis.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 """
 REST API Controller for multiple resource cell annotation
 """
@@ -8,8 +24,8 @@ from pathlib import Path
 from queue import Empty
 import shutil
 from tempfile import NamedTemporaryFile
-from typing import List
-from fastapi import BackgroundTasks, FastAPI, UploadFile, Query, WebSocket, HTTPException
+from typing import Annotated, List
+from fastapi import BackgroundTasks, Depends, FastAPI, UploadFile, Query, WebSocket, HTTPException, WebSocketException, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -37,7 +53,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.get("/metadata/settings/defaults")
 def read_default_settings():
     return default_settings
@@ -66,6 +81,16 @@ def read_cells(tissue: str, sources: List[str] = Query([])):
     return list(
     CellType.parse_json(store.cell_type_of(tissue, set(sources))))
 
+async def get_session_data(session: str):
+    """
+    Get session_data if it exists; else throw an 422 error 
+    """
+    session_data : SessionData = SessionManager.get_session(session)
+    if not session_data:
+        raise HTTPException(status_code=422, detail="Session or file not found")
+    return session_data
+
+
 @app.post("/session", status_code=201)
 def create_session(settings: Settings, cells: list[Cell]):
     """
@@ -74,18 +99,10 @@ def create_session(settings: Settings, cells: list[Cell]):
     return {"session": SessionManager.create_session(cells=cells, settings=settings)}
 
 @app.post("/dataset/{session}", status_code=201)
-async def analyze_file(session: str, file: UploadFile,  background_tasks: BackgroundTasks):
+async def analyze_file(session_data : Annotated[SessionData, Depends(get_session_data)], file: UploadFile,  background_tasks: BackgroundTasks):
     """
     analyse uploaded file use
     """
-    if not session:
-        raise HTTPException(status_code=422, detail="Session not specified")
-
-    # upload scRNAseq https://fastapi.tiangolo.com/reference/uploadfile/#fastapi.UploadFile
-    session_data : SessionData = SessionManager.get_session(session)
-
-    if not session_data:
-        raise HTTPException(status_code=404, detail="Session not found")
     if session_data.file:
         raise HTTPException(status_code=409, detail="file already uploaded")
     filename = file.filename
@@ -108,28 +125,32 @@ async def analyze_file(session: str, file: UploadFile,  background_tasks: Backgr
     }
 
 @app.get("/annotated/{session}/{filename}")
-async def get_annotated_dataset(session: str, filename: str):
-    session_data : SessionData = SessionManager.get_session(session)
-    if not session_data or not session_data.annotated or session_data.download_filename != filename:
-        raise HTTPException(status_code=404, detail="Session or file not found")
+async def get_annotated_dataset(session_data : Annotated[SessionData, Depends(get_session_data)], filename: str):
+    if not session_data.annotated or session_data.download_filename != filename:
+        raise HTTPException(status_code=404, detail="file not found")
     return FileResponse(path = session_data.annotated, media_type="application/octet-stream", filename=session_data.download_filename, content_disposition_type="attachment")
 
-@app.websocket("/ws/{session}")
-async def get_feedback(socket: WebSocket, session : str):
+
+async def get_session_data_ws(session: str):
     session_data : SessionData = SessionManager.get_session(session)
     if not session_data:
-        await socket.close(code=4004, reason="Session not found")
-        return
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="cannot find session id")
 
     if session_data.has_finished:
-        await socket.close(code=4022, reason="analysis has finished")
-        return
-    if session_data.has_started:
-        await socket.close(code=4009, reason="monitoring is active")
-        return
+        raise WebSocketException(code=4022, reason="analysis for this has finised")
 
+    if session_data.has_started:
+        raise WebSocketException(code=4009, reason="analysis for this session in progress")
+
+    return session_data
+
+
+@app.websocket("/ws/{session}")
+async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, Depends(get_session_data_ws)]):
+#    session_data : SessionData = SessionManager.get_session(session)
     session_data.has_started = True
     await socket.accept()
+
     logger.info("socket accepted")
     try:
         if not session_data.file:
@@ -154,7 +175,12 @@ async def monitor_analysis(session_data: SessionData, socket: WebSocket):
     while not queue.empty():
         logger.info("queue not empty")
         current : FeedbackModel = queue.get(block=False)
-        await feedback.send(current)
+        try:
+            await feedback.send(current)
+        except TypeError as e:
+            logger.error(e)
+            logger.error("Feedback message type: %s", type(current.message))
+            logger.error("Feedback message : %s", current.message)
         queue.task_done()
 
         if current.activity == Activity.END:
