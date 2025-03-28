@@ -40,6 +40,7 @@ class FeedbackModel:
     activity: Activity
     message: Optional[str] = None
     link: Optional[str] = None
+    report_link: Optional[str] = None
     image: Optional[Figure] = None
     output_path: Optional[Path] = None
     end : datetime = dataclasses.field(default_factory=datetime.now)
@@ -70,7 +71,7 @@ class FeedbackSocket:
         if (feedback.image):
             with io.BytesIO() as buf:
                 fig = feedback.image
-                fig.savefig(buf, format='png')
+                fig.savefig(buf, format='svg',  bbox_inches='tight')
                 buf.seek(0)
                 await self.socket.send_bytes(buf)
                 return
@@ -79,6 +80,7 @@ class FeedbackSocket:
                                     'finished': feedback.end.isoformat(sep='T'),
                                     'duration': feedback.duration, 
                                     'message': str(feedback.message),
+                                    'report_link': feedback.report_link,
                                     'link': feedback.link})
 class FeedbackQueue:
     """

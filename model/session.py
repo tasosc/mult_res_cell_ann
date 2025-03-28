@@ -33,6 +33,7 @@ class SessionData:
     file: Optional[Path] = None
     annotated: Optional[Path] = None
     download_filename: Optional[str] = None
+    download_report: Optional[str] = None
     has_finished: bool = False
     has_started: bool = False
 

@@ -130,6 +130,13 @@ async def get_annotated_dataset(session_data : Annotated[SessionData, Depends(ge
         raise HTTPException(status_code=404, detail="file not found")
     return FileResponse(path = session_data.annotated, media_type="application/octet-stream", filename=session_data.download_filename, content_disposition_type="attachment")
 
+@app.get("/report/{session}/{filename}")
+async def get_report(session_data : Annotated[SessionData, Depends(get_session_data)], filename: str):
+    if not session_data.annotated or session_data.download_report != filename:
+        raise HTTPException(status_code=404, detail="file not found")
+    return FileResponse(path = session_data.annotated.with_suffix(".pdf"), media_type="application/octet-stream", filename=session_data.download_report, content_disposition_type="attachment")
+
+
 
 async def get_session_data_ws(session: str):
     session_data : SessionData = SessionManager.get_session(session)
@@ -139,16 +146,12 @@ async def get_session_data_ws(session: str):
     if session_data.has_finished:
         raise WebSocketException(code=4022, reason="analysis for this has finised")
 
-    if session_data.has_started:
-        raise WebSocketException(code=4009, reason="analysis for this session in progress")
-
     return session_data
 
 
 @app.websocket("/ws/{session}")
 async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, Depends(get_session_data_ws)]):
 #    session_data : SessionData = SessionManager.get_session(session)
-    session_data.has_started = True
     await socket.accept()
 
     logger.info("socket accepted")
@@ -162,8 +165,6 @@ async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, 
     except Empty:
         pass
     await socket.close()
-    session_data.has_started = False
-
 
 async def monitor_analysis(session_data: SessionData, socket: WebSocket):
     feedback = FeedbackSocket(socket)
