@@ -1,7 +1,7 @@
 """ Session model """
+from asyncio import Queue
 import dataclasses
 from pathlib import Path
-from queue import Queue
 from typing import Optional
 import uuid
 import pandas as pd

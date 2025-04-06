@@ -25,7 +25,7 @@ from queue import Empty
 import shutil
 from tempfile import NamedTemporaryFile
 from typing import Annotated, List
-from fastapi import BackgroundTasks, Depends, FastAPI, UploadFile, Query, WebSocket, HTTPException, WebSocketException, status
+from fastapi import BackgroundTasks, Depends, FastAPI, UploadFile, Query, WebSocket, HTTPException, WebSocketDisconnect, WebSocketException, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -99,9 +99,11 @@ def create_session(settings: Settings, cells: list[Cell]):
     return {"session": SessionManager.create_session(cells=cells, settings=settings)}
 
 @app.post("/dataset/{session}", status_code=201)
-async def analyze_file(session_data : Annotated[SessionData, Depends(get_session_data)], file: UploadFile,  background_tasks: BackgroundTasks):
+async def analyze_file(session_data : Annotated[SessionData, Depends(get_session_data)],
+                       file: UploadFile,
+                       background_tasks: BackgroundTasks):
     """
-    analyse uploaded file use
+    uploaded scRNA-seq dataset and create background task that starts the analysis workflow
     """
     if session_data.file:
         raise HTTPException(status_code=409, detail="file already uploaded")
@@ -112,8 +114,10 @@ async def analyze_file(session_data : Annotated[SessionData, Depends(get_session
         session_data.download_filename = filename
         shutil.copyfileobj(file.file, tmp)
 
-    file.close()
+    await file.close()
+    logger.info("Starting background task")
     background_tasks.add_task(run, session_data)
+    logger.info("Started background  task")
     # TODO background task for deleting session in X time
 
     return {
@@ -151,31 +155,34 @@ async def get_session_data_ws(session: str):
 
 @app.websocket("/ws/{session}")
 async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, Depends(get_session_data_ws)]):
-#    session_data : SessionData = SessionManager.get_session(session)
+    session_id = session_data.uuid.hex
     await socket.accept()
 
-    logger.info("socket accepted")
+    logger.info("socket accepted for %s", session_id)
     try:
         if not session_data.file:
             logger.info("file not uploaded")
-            await asyncio.sleep(10)
+           # await asyncio.sleep(10)
         if session_data.file:
             logger.info("file uploaded")
             await monitor_analysis(session_data=session_data, socket=socket)
-    except Empty:
-        pass
-    await socket.close()
+    except WebSocketDisconnect:
+        logger.warning("Client disconnected, %s", session_id)
+        return
+    await socket.close(code=1000, reason="End of line")
 
 async def monitor_analysis(session_data: SessionData, socket: WebSocket):
     feedback = FeedbackSocket(socket)
     queue = session_data.message_queue
 
-    if queue.empty():
-        logger.info("queue empty")
-        await asyncio.sleep(10)
-    while not queue.empty():
-        logger.info("queue not empty")
-        current : FeedbackModel = queue.get(block=False)
+    logger.info("Wait for message to start")
+    is_ready = await socket.receive_text()
+    logger.info("Got '%s' to start", is_ready)
+
+    while not session_data.has_finished:
+        logger.info("Getting next item in the queue")
+        current : FeedbackModel = await queue.get()
+        logger.info("Got... %s. Trying to send", current)
         try:
             await feedback.send(current)
         except TypeError as e:
@@ -187,10 +194,8 @@ async def monitor_analysis(session_data: SessionData, socket: WebSocket):
         if current.activity == Activity.END:
             logger.info("end reached")
             session_data.has_finished = True
-            break
+            queue.shutdown()
 
-        if queue.empty():
-            await asyncio.sleep(10)
         # Save to PDF pages (report0
     # https://stackoverflow.com/questions/11328958/save-multiple-plots-in-a-single-pdf-file
     # and/or using websockets ? return json with fig & text

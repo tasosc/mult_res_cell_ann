@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 import io
 import logging
 from pathlib import Path
-from queue import Queue
+import asyncio
 from typing import Optional
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketState
@@ -68,25 +68,29 @@ class FeedbackSocket:
             logger.error("Socket state is not open %s", self.socket.state)
             return
 
-        if (feedback.image):
+        if feedback.image:
             with io.BytesIO() as buf:
                 fig = feedback.image
                 fig.savefig(buf, format='svg',  bbox_inches='tight')
                 buf.seek(0)
                 await self.socket.send_bytes(buf)
                 return
-        
-        await self.socket.send_json({'activity': feedback.activity,
-                                    'finished': feedback.end.isoformat(sep='T'),
-                                    'duration': feedback.duration, 
-                                    'message': str(feedback.message),
-                                    'report_link': feedback.report_link,
-                                    'link': feedback.link})
+
+        await self.socket.send_json(
+            {
+                "activity": feedback.activity,
+                "finished": feedback.end.isoformat(sep="T"),
+                "duration": feedback.duration,
+                "message": str(feedback.message),
+                "report_link": feedback.report_link,
+                "link": feedback.link,
+            }
+        )
 class FeedbackQueue:
     """
     A stopwatch that sends a message to a socket at the end
     """
-    def __init__(self, queue: Queue):
+    def __init__(self, queue: asyncio.Queue):
         self.queue = queue
         self.start_time = datetime.now()
 
@@ -96,9 +100,9 @@ class FeedbackQueue:
         """
         # Simple message no duration
         if (feedback.activity == Activity.NONE):
-            self.queue.put(feedback)
+            self.queue.put_nowait(feedback)
             return
 
         feedback.set_duration(self.start_time)
-        self.queue.put(feedback)
+        self.queue.put_nowait(feedback)
         self.start_time = datetime.now()
