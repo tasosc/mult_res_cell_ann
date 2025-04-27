@@ -15,15 +15,9 @@
 # You should have received a copy of the GNU General Public License 
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import base64
 import re
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
-import pandas as pd
 import json
 import logging
-from datetime import datetime
-
 
 class CellType:
     logger = logging.getLogger("CellType")
@@ -38,39 +32,7 @@ class CellType:
 
     def add_genes(self, genes: list[str]):
         self.genes.update(genes)
-        self.logger.debug(f"Added genes {genes} to {self.genes}")
-
-    def set_new_genes(self, genes: list[str] | None):
-        if genes:
-            self.new_genes = set(genes)
-        else:
-            self.new_genes = None
-
-    def get_selected(self) -> pd.DataFrame:
-        selection = set()
-        if self.is_selected:
-            selection.update(self.genes)
-        elif self.gene_selection:
-            selection.update(self.gene_selection)
-        if self.new_genes:
-            selection.update(self.new_genes)
-        if len(selection) == 0:
-            return pd.DataFrame({"cell_name": [], "Symbol": []})
-        selection.discard(None)
-        df = pd.DataFrame(data=selection, columns=["Symbol"])
-        df.insert(0, "cell_name", self.cell_type)
-        return df
-
-    def has_selected(self) -> bool:
-        selection = set()
-        if self.is_selected:
-            selection.update(self.genes)
-        elif self.gene_selection:
-            selection.update(self.gene_selection)
-        if self.new_genes:
-            selection.update(self.new_genes)
-        selection.discard(None)
-        return len(selection) > 0
+        self.logger.debug("Added genes %s to %s", genes, self.genes)
 
     @classmethod
     def parse_json(cls, tissue_cells: list[str]):
@@ -86,123 +48,3 @@ class CellType:
                     cells_dict[key].add_genes(c["genes"])
         return sorted(cells_dict.values(), key=lambda k: k.cell_type)
 
-
-class Config:
-    def __init__(self) -> None:
-        self.defaults = self.__config_load()
-
-    def update(self, new_defaults: dict | None = None) -> None:
-        if new_defaults and len(new_defaults) > 0:
-            # first sanitize input to avoid including config values not
-            d = {key: value for key, value in new_defaults.items() if key in self.defaults.keys()}
-            if "h5ad_path" in d:
-                del d["h5ad_path"]
-            self.defaults.update(d)
-
-    def reload_from_disk(self):
-        self.defaults = self.__config_load()
-
-    @staticmethod
-    def __config_load() -> dict:
-        with open("config.json") as f:
-            return json.load(f)
-
-    def get_bool(self, key):
-        return key in self.defaults and self.defaults[key]
-
-
-class ImportExport:
-    logger = logging.getLogger("ImportExport")
-
-    @classmethod
-    def export_link(cls, config: Config, tissue: str, cells: list[CellType] | None) -> str:
-        cells = cells if cells else []
-        cls.logger.debug("Cells given with selected value %s", any(map(lambda x: x.has_selected(), cells)))
-        cells = [c.__dict__ for c in cells]
-        # sanitize config.defaults
-        c = dict(config.defaults)
-        if "h5ad_path" in c:
-            del c["h5ad_path"]
-        obj = {"config": c, "tissue": tissue, "cells": cells}
-        file = f'last-run-{datetime.now().isoformat().replace(":", "_")}.json'
-        js = json.dumps(obj=obj, default=list, indent=4)
-        b64 = base64.b64encode(js.encode())
-        return f'<a href="data:application/json;base64,{b64.decode()}" download="{file}">Save current selection</a>'
-
-    @classmethod
-    def import_selections(cls, uploaded_file) -> tuple[dict, str, list[CellType]]:
-        obj = json.load(uploaded_file)
-        cls.logger.debug(obj)
-        config = obj.get('config', None)
-
-        tissue = obj.get('tissue', None)
-        cells_json = obj.get('cells', {})
-
-        cells = list()
-        for cell_dict in cells_json:
-            if 'cell_type' in cell_dict:
-                cell = CellType(cell_name=cell_dict['cell_type'])
-                cells.append(cell)
-                cell.is_selected = cell_dict.get('is_selected', False)
-                cell.add_genes(cell_dict.get('genes', []))
-                cell.gene_selection = cell_dict.get('gene_selection', [])
-                cell.new_genes = cell_dict.get('new_genes', None)
-        return (config, tissue, cells)
-
-
-class Render:
-    """
-    Helper class to render plots, dataframes and text without adding a dependency to the streamlit
-    """
-
-    def __init__(self) -> None:
-        """
-        Initialize a new instance of the Render class
-        
-        """
-        self.render_fig_lambda = None
-        self.render_text_lambda = None
-
-    def set_render_fig_lambda(self, render_lambda):
-        """
-        Helper method that sets function to write figure output, e.g. in StreamLit it would be `st.pyplot`
-        """
-        self.render_fig_lambda = render_lambda
-
-    def set_render_text_lambda(self, render_lambda):
-        """
-        Helper method that sets function to write text and dataframe output, e.g. in StreamLit it would be `st.write`
-        """
-        self.render_text_lambda = render_lambda
-
-    def render_fig(self, fig: Figure | Axes | list[Axes] | None, expected_verbosity=1) -> Figure | None:
-        """
-        Render the provided figure if the expected verbosity is equal or less than the configured verbosity
-
-        Parameters
-        ---------
-        fig: Matplotlib Figure
-            The figure. If it is None this method does nothing
-        expected_verbosity: int
-            The expected verbosity
-
-        """
-        if fig is None:
-            return
-        if self.render_fig_lambda:
-            self.render_fig_lambda(fig, expected_verbosity)
-
-    def render_text(self, something, expected_verbosity=1):
-        """
-        Render the provided something if the expected verbocity is equal or less than the configured verbocity
-
-        Parameters
-        ---------
-        something: Any | str | DataFrame
-            Something that could be written
-        expected_verbosity: int
-            The expected verbosity
-
-        """
-        if self.render_text_lambda:
-            self.render_text_lambda(something, expected_verbosity)
