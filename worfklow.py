@@ -35,57 +35,44 @@ logger = logging.getLogger("uvicorn.error")
 def run(session_data : SessionData):
     logger.info("Started analysis for session %s", session_data.uuid.hex)
     feedback_queue = FeedbackQueue(session_data.message_queue)
-    pdf = RenderToPdf()
+    pdf = RenderToPdf(session_data.settings.verbosity)
     pdf.set_frontpage(session_data.file.name if session_data.file else "annotated")
-    def render_text(something, expected_verbosity=1):
-        logger.debug("rendering %s", something)
-        if session_data.settings.verbosity < expected_verbosity:
-            return
-        if isinstance(something, pd.DataFrame):
-            pdf.write_table(something)
-            return
-        if not isinstance(something, str):
-            logger.warning("Message is not str %s", type(something))
-            logger.warning("as string %s", something)
-            try:
-                something_str = str(something)
-                pdf.write_text(something_str)
-            except Exception as e:
-                logger.error("Error while trying to write %s", something)
-                logger.error(e)
-            return
-        pdf.write_text(something)
 
-    verbosity = session_data.settings.verbosity
     pdf.start_title("Parse dataset")
+    pdf.write_text(session_data.file)
+    pdf.write_text(str(session_data.settings))
     pp = PreProcessing.build_from(session_data.file, session_data.settings)
-    pp.render.set_render_text_lambda(render_text)
+    pp.set_render(pdf)
     feedback_queue.put(FeedbackModel(activity=Activity.PARSE_DATASET, message="Parse dataset"))
  
     pdf.start_title("Pre-processing Quality Control")
     pp.qc()
 
     feedback_queue.put(FeedbackModel(activity=Activity.PP_QC, message="Pre-processing Quality Control"))
+    pdf.start_title("Pre-processing Normalization")
     pp.normalization()
     feedback_queue.put(FeedbackModel(activity=Activity.PP_NORM, message="Pre-Processing, Normalization"))
+    pdf.start_title("Pre-processing Feature Selection")
     pp.feature_selection()
     feedback_queue.put(FeedbackModel(activity=Activity.PP_FEATURE, message="Pre-Processing, Feature selection"))
+    pdf.start_title("Pre-processing Dimensionlity Reduction")
     pp.dimensionality_reduction()
     feedback_queue.put(FeedbackModel(activity=Activity.PP_REDUCTION, message="Pre-Processing, Dimensionality Reduction"))
+    pdf.start_title("Pre-processing Visualization")
     fig = pp.visualization()
-    if (verbosity >= 1):
-        pdf.write_fig(fig)
-    feedback_queue.put(FeedbackModel(activity=Activity.PP_VISUALIAZTION))
-    si = StructureIdentification(pp.adata, session_data.settings)
-    si.render.set_render_text_lambda(render_text)
+    pdf.write_fig(fig, "Pre-processing visualization")
+    feedback_queue.put(FeedbackModel(activity=Activity.PP_VISUALIAZTION, message="Pre-processing, Visualization"))
+    pdf.start_title("Structure Identification")
+    si = StructureIdentification(pp.adata, session_data.settings, pdf)
+    pdf.start_title("Clustering")
     fig2=si.clustering(session_data.cells)
-    if (verbosity >= 1):
-        pdf.write_fig(fig2)
-    feedback_queue.put(FeedbackModel(activity=Activity.SI_CLUSTERING))
+    pdf.write_fig(fig2)
+    feedback_queue.put(FeedbackModel(activity=Activity.SI_CLUSTERING,message="Clustering"))
+    pdf.start_title("Annotation")
     fig3=si.annotation()
-    if (verbosity >= 1):
-        pdf.write_fig(fig3)
-    feedback_queue.put(FeedbackModel(activity=Activity.SI_ANNOTATION))
+    pdf.add_page()
+    pdf.write_fig(fig3)
+    feedback_queue.put(FeedbackModel(activity=Activity.SI_ANNOTATION, message="Annotation"))
     with NamedTemporaryFile(delete=False) as tmp:
         # Write the annotated dataset to download_file
         tmp_path = Path(tmp.name)

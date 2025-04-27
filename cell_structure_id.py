@@ -17,6 +17,8 @@
 import logging
 from os import PathLike
 import matplotlib
+
+from render_to_pdf import RenderToPdf
 matplotlib.use('AGG')
 from matplotlib.figure import Figure
 import scanpy as sc
@@ -30,8 +32,6 @@ import seaborn as sns
 from model.session import Cell
 from model.settings import Settings
 import warnings
-
-from utilities import Render
 
 warnings.filterwarnings("ignore")
 logger = logging.getLogger("Store")
@@ -62,7 +62,7 @@ class StructureIdentification:
 
     """
 
-    def __init__(self, adata: anndata.AnnData, config: Settings) -> None:
+    def __init__(self, adata: anndata.AnnData, config: Settings, render: RenderToPdf) -> None:
         """
         Create a new instance of StructureIdentification class
 
@@ -75,7 +75,7 @@ class StructureIdentification:
         """
         self.config = config
         self.adata = adata
-        self.render = Render()
+        self.render = render
         self.acts = None
 
     def clustering(self, cell_types: list[Cell]):
@@ -88,7 +88,7 @@ class StructureIdentification:
                The list of cell types to use an input in ORA after they are filtered. Only Cell with selected genes, new genes or all selected genes will be used.
         """
         # Filter cell marker dataframe to obtain markers related to give cell types
-        self.render.render_text(
+        self.render.write_text(
             "Filter cell marker dataframe to obtain markers related to give cell types",
             2,
         )
@@ -97,9 +97,9 @@ class StructureIdentification:
             ~filtered_marker_df.duplicated(["cell_name", "Symbol"])
         ]
         filtered_marker_df = filtered_marker_df.dropna()
-        self.render.render_text(filtered_marker_df, 3)
+        self.render.write_table(filtered_marker_df, 3)
         # Enrichment with Over Representation Analysis (ORA)
-        self.render.render_text("Enrichment with Over Representation Analysis (ORA)", 2)
+        self.render.write_text("Enrichment with Over Representation Analysis (ORA)")
         dc.run_ora(
             mat=self.adata,
             net=filtered_marker_df,
@@ -110,7 +110,7 @@ class StructureIdentification:
             use_raw=self.config.only_highly_significant_genes
         )
         # The obtained scores (-log10(p-value))(ora_estimate) and p-values (ora_pvals) are stored in the .obsm key
-        self.render.render_text(
+        self.render.write_text(
             "The obtained scores (-log10(p-value))(ora_estimate) and p-values (ora_pvals) are stored in the .obsm key",
             2,
         )
@@ -119,18 +119,18 @@ class StructureIdentification:
         acts_v = acts.X.ravel()
         max_e = np.nanmax(acts_v[np.isfinite(acts_v)])
         acts.X[~np.isfinite(acts.X)] = max_e
-        self.render.render_text(acts, 3)
+        self.render.write_text(acts, 3)
         self.acts = acts
         # Create cell-type list and ORA-score dataframe
-        self.render.render_text("Create cell-type list and ORA-score dataframe", 2)
+        self.render.write_text("Create cell-type list and ORA-score dataframe")
         score_df = self.adata.obsm["ora_estimate"]
         ctype_lst = list(score_df.columns)
         score_df["cluster"] = self.adata.obs["leiden"]
-        self.render.render_text(ctype_lst, 3)
+        self.render.write_text(str(ctype_lst), 3)
         melted_df = self.__create_melted_df(score_df, ctype_lst)
-        self.render.render_text(melted_df, 3)
-        self.render.render_text(
-            "Create ORA-score violin plots for all leiden clusters and cell-types", 2
+        self.render.write_table(melted_df, 3)
+        self.render.write_text(
+            "Create ORA-score violin plots for all leiden clusters and cell-types"
         )
         return self.cluster_vln_plot(melted_df=melted_df, title="ORA-score violin plot")
 
@@ -173,39 +173,40 @@ class StructureIdentification:
         Annotate the :attr:`~adata` and visualize the result
         """
         # Perform statistical test to annotate cell clusters automatically
-        self.render.render_text(
-            "Perform statistical test to annotate cell clusters automatically", 2
+        self.render.write_text(
+            "Perform statistical test to annotate cell clusters automatically"
         )
         df = dc.rank_sources_groups(
             self.acts, groupby="leiden", reference="rest", method="t-test_overestim_var"
         )
-        self.render.render_text(df, 3)
+        self.render.write_table(df, 3)
         n_ctypes = 3
         ctypes_dict = (
             df.groupby("group")
             .head(n_ctypes)
             .groupby("group")["names"]
-            .apply(lambda x: list(x))
+            .apply(list)
             .to_dict()
         )
-        self.render.render_text(ctypes_dict, 3)
+        self.render.write_text(ctypes_dict, 3)
         annotation_dict = (
             df.groupby("group").head(1).set_index("group")["names"].to_dict()
         )
-        self.render.render_text(annotation_dict, 3)
+        self.render.write_text(annotation_dict, 3)
         self.adata.obs["cell_type"] = [
             annotation_dict[clust] for clust in self.adata.obs["leiden"]
         ]
         # Visualize final cell-type annotation result
-        self.render.render_text("Visualize final cell-type annotation result", 2)
+        self.render.write_text("Visualize final cell-type annotation result")
         umap_plot = sc.pl.umap(
             self.adata,
             color="cell_type",
             title="decoupleR cell annotation",
             frameon=True,
             legend_fontweight="normal",
-            legend_fontsize=10,
+            legend_fontsize="small",
             return_fig=True,
+            legend_loc="best"
         )
         return umap_plot
 
@@ -213,6 +214,7 @@ class StructureIdentification:
         """
         Write the annotated :attr:`~adata` to an HDF 5 (h5ad) file.
         """
+        self.render.write_text(f"Write the annotated dataset tp {output}")
         self.adata.write_h5ad(output, compression=hdf5plugin.FILTERS["zstd"])
 
     def cluster_vln_plot(self, melted_df, title: str | None) -> Figure|None:
@@ -226,6 +228,7 @@ class StructureIdentification:
            The melted dataframe
         """
         # Plotting
+        self.render.write_text("Plotting violin plot")
         plt.figure(figsize=(16, 6))
         ax = sns.violinplot(
             x="cluster",
@@ -238,6 +241,7 @@ class StructureIdentification:
         )
 
         # Ensuring gridlines are below plot elements
+        self.render.write_text("Ensuring gridlines are below plot elements")
         ax.set_axisbelow(True)
 
         # Adding gridlines
@@ -246,6 +250,7 @@ class StructureIdentification:
         )  # Horizontal gridlines
 
         # Compute midpoints between x-tick labels for grid placement
+        self.render.write_text("Compute midpoints between x-tick labels for grid placement")
         xticks = ax.get_xticks()
         apoints = xticks[:-1] + xticks[1:]
         midpoints = [i / 2 for i in apoints]

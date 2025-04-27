@@ -17,11 +17,9 @@
 """
 REST API Controller for multiple resource cell annotation
 """
-import asyncio
 import datetime
 import logging
 from pathlib import Path
-from queue import Empty
 import shutil
 from tempfile import NamedTemporaryFile
 from typing import Annotated, List
