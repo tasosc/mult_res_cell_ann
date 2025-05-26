@@ -122,8 +122,8 @@ wheels = [
 
 [[package]]
 name = "decoupler"
-version = "1.8.1"
-source = { path = "../decoupler-py/dist/decoupler-1.8.1-py3-none-any.whl" }
+version = "1.9.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numba" },
     { name = "numpy" },
@@ -131,22 +131,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/77/22/34f302ae6c9248ad8e3cf763b726a395734c2405c77cd3429c2d5855c74f/decoupler-1.9.2.tar.gz", hash = "sha256:9b3f75673311635fd30228273f953cc2b3d3886bcebff83abadfc9200951a7f9", size = 92826 }
 wheels = [
-    { filename = "decoupler-1.8.1-py3-none-any.whl", hash = "sha256:0ee84756bf1b9b1a5d6dda717b73ca86572f5720482ea506af589a1abf009a73" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "adjusttext", marker = "extra == 'plotting'", specifier = ">=1.1.1" },
-    { name = "igraph", marker = "extra == 'plotting'", specifier = ">=0.11.5" },
-    { name = "numba", specifier = ">=0.61.0,<0.62.0" },
-    { name = "numpy", specifier = ">=1" },
-    { name = "omnipath", marker = "extra == 'omnipath'", specifier = ">=1.0.8" },
-    { name = "pandas", specifier = ">=2.2.2" },
-    { name = "pypath-omnipath", marker = "extra == 'omnipath'", specifier = ">=0.16.15" },
-    { name = "scikit-learn", marker = "extra == 'scikit'", specifier = ">=1.5.0" },
-    { name = "tqdm", specifier = ">=4.66.4" },
-    { name = "typing-extensions", specifier = ">=4.12.2" },
+    { url = "https://files.pythonhosted.org/packages/07/0c/ce2cea71e0af3b3d4639433ae2274115fa2c0c3905d9cc52608589fb05f5/decoupler-1.9.2-py3-none-any.whl", hash = "sha256:8e6539ffb2b9c9de67c9fcc5089557482e9848495b5e546b103d44bf86234792", size = 122577 },
 ]
 
 [[package]]
@@ -591,7 +578,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "decoupler", path = "../decoupler-py/dist/decoupler-1.8.1-py3-none-any.whl" },
+    { name = "decoupler" },
     { name = "fastapi", extras = ["standard"] },
     { name = "fastapi-sessions" },
     { name = "fpdf2" },

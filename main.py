@@ -26,6 +26,7 @@ from typing import Annotated, List
 from fastapi import BackgroundTasks, Depends, FastAPI, UploadFile, Query, WebSocket, HTTPException, WebSocketDisconnect, WebSocketException, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from model.enums import Activity, SvdSolverOptions
 from model.session import Cell, SessionData, SessionManager
@@ -35,7 +36,7 @@ from store import Store
 from utilities import CellType
 from utils.feedback_socket import FeedbackModel, FeedbackSocket
 
-app = FastAPI()
+app = FastAPI(title="Multi resource cell annotation api")
 logger = logging.getLogger("uvicorn.error")
 default_settings: Settings = Settings()
 BUF_SIZE=128*1024
@@ -51,30 +52,48 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.get("/metadata/settings/defaults")
+
+app.mount("/web", StaticFiles(directory="dist", html=True), name="static")
+
+api = FastAPI()
+
+@api.get("/health")
+def health():
+    """
+    Gets the health status
+    """
+    return {"status": "healthy"}
+
+@api.get("/metadata/settings/defaults")
 def read_default_settings():
     return default_settings
 
 
-@app.get("/metadata/svd_solver_options")
+@api.get("/metadata/svd_solver_options")
 def read_svd_solver_options():
     return SvdSolverOptions.values()
 
 
-@app.get("/tissues/{tissue}/sources")
+@api.get("/tissues/{tissue}/sources")
 def read_sources(tissue: str):
     store: Store = Store()
     return store.get_repos_for_tissue(tissue)
 
 
-@app.get("/tissues")
+@api.get("/tissues")
 def read_tissues():
+    """
+    Get tissues    
+    """
     store: Store = Store()
     return store.get_tissue_types()
 
 
-@app.get("/tissues/{tissue}/cells")
+@api.get("/tissues/{tissue}/cells")
 def read_cells(tissue: str, sources: List[str] = Query([])):
+    """
+    Get cells for specific tissue given the list of sources
+    """
     store: Store = Store()
     return list(
     CellType.parse_json(store.cell_type_of(tissue, set(sources))))
@@ -89,14 +108,14 @@ async def get_session_data(session: str):
     return session_data
 
 
-@app.post("/session", status_code=201)
+@api.post("/session", status_code=201)
 def create_session(settings: Settings, cells: list[Cell]):
     """
     Create a session and return the session id
     """
     return {"session": SessionManager.create_session(cells=cells, settings=settings)}
 
-@app.post("/dataset/{session}", status_code=201)
+@api.post("/dataset/{session}", status_code=201)
 async def analyze_file(session_data : Annotated[SessionData, Depends(get_session_data)],
                        file: UploadFile,
                        background_tasks: BackgroundTasks):
@@ -126,21 +145,38 @@ async def analyze_file(session_data : Annotated[SessionData, Depends(get_session
         "link": None,
     }
 
-@app.get("/annotated/{session}/{filename}")
-async def get_annotated_dataset(session_data : Annotated[SessionData, Depends(get_session_data)], filename: str):
+
+@api.get("/annotated/{session}/{filename}")
+async def get_annotated_dataset(session_data: Annotated[SessionData, Depends(get_session_data)], filename: str):
+    """
+    Get annotated dataset from a given session with a given filename
+    """
     if not session_data.annotated or session_data.download_filename != filename:
         raise HTTPException(status_code=404, detail="file not found")
-    return FileResponse(path = session_data.annotated, media_type="application/octet-stream", filename=session_data.download_filename, content_disposition_type="attachment")
+    return FileResponse(path = session_data.annotated, media_type="application/octet-stream", 
+                        filename=session_data.download_filename, content_disposition_type="attachment")
 
-@app.get("/report/{session}/{filename}")
-async def get_report(session_data : Annotated[SessionData, Depends(get_session_data)], filename: str):
+
+@api.get("/report/{session}/{filename}")
+async def get_report(session_data : Annotated[SessionData, 
+                                              Depends(get_session_data)], filename: str):
+    """
+    Get report for a given session analysis with a given filename
+    """
     if not session_data.annotated or session_data.download_report != filename:
         raise HTTPException(status_code=404, detail="file not found")
-    return FileResponse(path = session_data.annotated.with_suffix(".pdf"), media_type="application/octet-stream", filename=session_data.download_report, content_disposition_type="attachment")
-
+    return FileResponse(
+        path=session_data.annotated.with_suffix(".pdf"),
+        media_type="application/octet-stream",
+        filename=session_data.download_report,
+        content_disposition_type="attachment",
+    )
 
 
 async def get_session_data_ws(session: str):
+    """
+    Get session data for websocket
+    """
     session_data : SessionData = SessionManager.get_session(session)
     if not session_data:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="cannot find session id")
@@ -151,8 +187,12 @@ async def get_session_data_ws(session: str):
     return session_data
 
 
-@app.websocket("/ws/{session}")
-async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, Depends(get_session_data_ws)]):
+@api.websocket("/ws/{session}")
+async def get_feedback(socket: WebSocket, session_data: Annotated[SessionData, Depends(get_session_data_ws)]):
+    """
+    Open a websocket for the specified session
+    It awaits for a message from the frontend to start sending messages
+    """
     session_id = session_data.uuid.hex
     await socket.accept()
 
@@ -160,7 +200,7 @@ async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, 
     try:
         if not session_data.file:
             logger.info("file not uploaded")
-           # await asyncio.sleep(10)
+        # await asyncio.sleep(10)
         if session_data.file:
             logger.info("file uploaded")
             await monitor_analysis(session_data=session_data, socket=socket)
@@ -169,7 +209,12 @@ async def get_feedback(socket: WebSocket, session_data : Annotated[SessionData, 
         return
     await socket.close(code=1000, reason="End of line")
 
+app.mount("/api/v1", api)
+
 async def monitor_analysis(session_data: SessionData, socket: WebSocket):
+    """
+    Monitor running analysis
+    """
     feedback = FeedbackSocket(socket)
     queue = session_data.message_queue
 

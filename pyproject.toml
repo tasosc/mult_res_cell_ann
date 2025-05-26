@@ -17,6 +17,3 @@ dependencies = [
 	"llvmlite >= 0.44.0",
 	"fpdf2"
 ]
-
-[tool.uv.sources]
-decoupler = { path = "../decoupler-py/dist/decoupler-1.8.1-py3-none-any.whl" }

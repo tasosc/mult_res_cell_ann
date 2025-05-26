@@ -14,32 +14,42 @@
 # You should have received a copy of the GNU General Public License 
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-FROM python:3.11-slim AS build
+FROM python:3.13-slim AS build
 WORKDIR /usr/src/app
 COPY requirements.init_db.txt ./requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+#ENV LLVM_CONFIG=/usr/bin/llvm-config-15
+RUN apt update && apt install -y git \
+	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+#	--mount=type=cache,target=/var/cache/apk \
+#	apk update \
+#	&& apk add  g++ gcc git  llvm15 llvm15-dev make musl-dev \
+RUN --mount=type=cache,target=/root/.cache/pip \
+	pip install -r requirements.txt
 COPY init/*.py init/*.sql init/*.json init/7k.txt ./init/
 RUN --mount=type=cache,target=/usr/src/app/init/cache \
 	mkdir data \
 	&& python init/init_db.py
 
-FROM python:3.11-slim
-# see https://docs.streamlit.io/knowledge-base/tutorials/deploy/docker
+FROM python:3.13-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN apt-get update \
 	&& apt-get install -y curl \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
-	&& adduser webapp
-WORKDIR /home/webapp
+	&& useradd -m webapp 
 USER webapp
+WORKDIR /home/webapp
 ENV PATH="/home/webapp/.local/bin:${PATH}" 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --compile-bytecode
 
-COPY *.py config.json ./
 COPY data/*P1.h5ad ./data/
+COPY *.py config.json  ./
+COPY model/*.py model/
+COPY utils/*.py utils/
+COPY dist/ dist/
 COPY --from=build /usr/src/app/data/cells.db ./data/
-EXPOSE 8501
+EXPOSE 8000
 
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+HEALTHCHECK CMD ["curl", "--fail", "http://localhost:8000/health"]
 
-ENTRYPOINT ["streamlit", "run", "main_web_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["uv", "run", "fastapi", "run", "main.py"]
